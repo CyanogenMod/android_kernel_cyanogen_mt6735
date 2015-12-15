@@ -520,6 +520,9 @@ static int sco_sock_bind(struct socket *sock, struct sockaddr *addr, int addr_le
 	if (!addr || addr->sa_family != AF_BLUETOOTH)
 		return -EINVAL;
 
+	if (alen < sizeof(struct sockaddr_sco))
+		return -EINVAL;
+
 	lock_sock(sk);
 
 	if (sk->sk_state != BT_OPEN) {
