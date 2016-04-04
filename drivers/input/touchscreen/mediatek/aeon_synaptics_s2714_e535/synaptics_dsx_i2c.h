@@ -325,8 +325,10 @@ int synaptics_fw_updater(unsigned char *fw_data);
 static inline ssize_t synaptics_rmi4_show_error(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
+#if 0
 	dev_warn(dev, "%s Attempted to read from write-only attribute %s\n",
 			__func__, attr->attr.name);
+#endif
 	return -EPERM;
 }
 
