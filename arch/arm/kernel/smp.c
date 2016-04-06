@@ -26,6 +26,9 @@
 #include <linux/completion.h>
 #include <linux/cpufreq.h>
 #include <linux/irq_work.h>
+#ifdef CONFIG_TRUSTY
+#include <linux/irqdomain.h>
+#endif
 
 #include <linux/atomic.h>
 #include <asm/smp.h>
@@ -46,6 +49,11 @@
 #include <asm/virt.h>
 #include <asm/mach/arch.h>
 #include <asm/mpu.h>
+#ifdef CONFIG_MTPROF
+#include "mt_sched_mon.h"
+#endif
+#include <mt-plat/mtk_ram_console.h>
+#include <hotplug.h>
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/ipi.h>
@@ -72,7 +80,16 @@ enum ipi_msg_type {
 	IPI_CPU_STOP,
 	IPI_IRQ_WORK,
 	IPI_COMPLETION,
+	IPI_CPU_BACKTRACE,
+#ifdef CONFIG_TRUSTY
+	IPI_CUSTOM_FIRST,
+	IPI_CUSTOM_LAST = 15,
+#endif
 };
+
+#ifdef CONFIG_TRUSTY
+struct irq_domain *ipi_custom_irq_domain;
+#endif
 
 static DECLARE_COMPLETION(cpu_running);
 
@@ -238,6 +255,13 @@ void __cpu_die(unsigned int cpu)
 		printk("CPU%u: unable to kill\n", cpu);
 }
 
+#ifdef CONFIG_MTK_IRQ_NEW_DESIGN
+void  __attribute__((weak)) gic_set_primask(void)
+{
+
+}
+#endif
+
 /*
  * Called from the idle thread for the CPU which has been shutdown.
  *
@@ -250,9 +274,19 @@ void __ref cpu_die(void)
 {
 	unsigned int cpu = smp_processor_id();
 
+	aee_rr_rec_hoplug(cpu, 51, 0);
+
 	idle_task_exit();
 
+	aee_rr_rec_hoplug(cpu, 52, 0);
+
+#ifdef CONFIG_MTK_IRQ_NEW_DESIGN
+	gic_set_primask();
+#endif
+
 	local_irq_disable();
+
+	aee_rr_rec_hoplug(cpu, 53, 0);
 
 	/*
 	 * Flush the data out of the L1 cache for this CPU.  This must be
@@ -262,12 +296,16 @@ void __ref cpu_die(void)
 	 */
 	flush_cache_louis();
 
+	aee_rr_rec_hoplug(cpu, 54, 0);
+
 	/*
 	 * Tell __cpu_die() that this CPU is now safe to dispose of.  Once
 	 * this returns, power and/or clocks can be removed at any point
 	 * from this CPU and its cache by platform_cpu_kill().
 	 */
 	complete(&cpu_died);
+
+	aee_rr_rec_hoplug(cpu, 55, 0);
 
 	/*
 	 * Ensure that the cache lines associated with that completion are
@@ -276,6 +314,8 @@ void __ref cpu_die(void)
 	 * CPU waiting for this one.
 	 */
 	flush_cache_louis();
+
+	aee_rr_rec_hoplug(cpu, 56, 0);
 
 	/*
 	 * The actual CPU shutdown procedure is at least platform (if not
@@ -331,6 +371,8 @@ asmlinkage void secondary_start_kernel(void)
 	struct mm_struct *mm = &init_mm;
 	unsigned int cpu;
 
+	aee_rr_rec_hoplug(cpu, 1, 0);
+
 	/*
 	 * The identity mapping is uncached (strongly ordered), so
 	 * switch away from it before attempting any exclusive accesses.
@@ -340,21 +382,35 @@ asmlinkage void secondary_start_kernel(void)
 	enter_lazy_tlb(mm, current);
 	local_flush_tlb_all();
 
+	aee_rr_rec_hoplug(cpu, 2, 0);
+
 	/*
 	 * All kernel threads share the same mm context; grab a
 	 * reference and switch to it.
 	 */
 	cpu = smp_processor_id();
+
+	aee_rr_rec_hoplug(cpu, 3, 0);
+
 	atomic_inc(&mm->mm_count);
 	current->active_mm = mm;
 	cpumask_set_cpu(cpu, mm_cpumask(mm));
 
+	aee_rr_rec_hoplug(cpu, 4, 0);
+
 	cpu_init();
+
+	aee_rr_rec_hoplug(cpu, 5, 0);
 
 	printk("CPU%u: Booted secondary processor\n", cpu);
 
 	preempt_disable();
+
+	aee_rr_rec_hoplug(cpu, 6, 0);
+
 	trace_hardirqs_off();
+
+	aee_rr_rec_hoplug(cpu, 7, 0);
 
 	/*
 	 * Give the platform a chance to do its own initialisation.
@@ -362,11 +418,19 @@ asmlinkage void secondary_start_kernel(void)
 	if (smp_ops.smp_secondary_init)
 		smp_ops.smp_secondary_init(cpu);
 
+	aee_rr_rec_hoplug(cpu, 8, 0);
+
 	notify_cpu_starting(cpu);
+
+	aee_rr_rec_hoplug(cpu, 9, 0);
 
 	calibrate_delay();
 
+	aee_rr_rec_hoplug(cpu, 10, 0);
+
 	smp_store_cpu_info(cpu);
+
+	aee_rr_rec_hoplug(cpu, 11, 0);
 
 	/*
 	 * OK, now it's safe to let the boot CPU continue.  Wait for
@@ -374,15 +438,27 @@ asmlinkage void secondary_start_kernel(void)
 	 * before we continue - which happens after __cpu_up returns.
 	 */
 	set_cpu_online(cpu, true);
+
+	aee_rr_rec_hoplug(cpu, 12, 0);
+
 	complete(&cpu_running);
 
+	aee_rr_rec_hoplug(cpu, 13, 0);
+
 	local_irq_enable();
+
+	aee_rr_rec_hoplug(cpu, 14, 0);
+
 	local_fiq_enable();
+
+	aee_rr_rec_hoplug(cpu, 15, 0);
 
 	/*
 	 * OK, it's off to the idle thread for us
 	 */
 	cpu_startup_entry(CPUHP_ONLINE);
+
+	aee_rr_rec_hoplug(cpu, 16, 0);
 }
 
 void __init smp_cpus_done(unsigned int max_cpus)
@@ -456,6 +532,7 @@ static const char *ipi_types[NR_IPI] __tracepoint_string = {
 	S(IPI_CPU_STOP, "CPU stop interrupts"),
 	S(IPI_IRQ_WORK, "IRQ work interrupts"),
 	S(IPI_COMPLETION, "completion interrupts"),
+	S(IPI_CPU_BACKTRACE, "CPU backtrace"),
 };
 
 static void smp_cross_call(const struct cpumask *target, unsigned int ipinr)
@@ -557,6 +634,58 @@ static void ipi_complete(unsigned int cpu)
 	complete(per_cpu(cpu_completion, cpu));
 }
 
+static cpumask_t backtrace_mask;
+static DEFINE_RAW_SPINLOCK(backtrace_lock);
+
+/* "in progress" flag of arch_trigger_all_cpu_backtrace */
+static unsigned long backtrace_flag;
+
+void smp_send_all_cpu_backtrace(void)
+{
+	unsigned int this_cpu = smp_processor_id();
+	int i;
+
+	if (test_and_set_bit(0, &backtrace_flag))
+		/*
+		 * If there is already a trigger_all_cpu_backtrace() in progress
+		 * (backtrace_flag == 1), don't output double cpu dump infos.
+		 */
+		return;
+
+	cpumask_copy(&backtrace_mask, cpu_online_mask);
+	cpu_clear(this_cpu, backtrace_mask);
+
+	pr_info("Backtrace for cpu %d (current):\n", this_cpu);
+	dump_stack();
+
+	pr_info("\nsending IPI to all other CPUs:\n");
+	smp_cross_call(&backtrace_mask, IPI_CPU_BACKTRACE);
+
+	/* Wait for up to 10 seconds for all other CPUs to do the backtrace */
+	for (i = 0; i < 10 * 1000; i++) {
+		if (cpumask_empty(&backtrace_mask))
+			break;
+		mdelay(1);
+	}
+
+	clear_bit(0, &backtrace_flag);
+	smp_mb__after_atomic();
+}
+
+/*
+ * ipi_cpu_backtrace - handle IPI from smp_send_all_cpu_backtrace()
+ */
+static void ipi_cpu_backtrace(unsigned int cpu, struct pt_regs *regs)
+{
+	if (cpu_isset(cpu, backtrace_mask)) {
+		raw_spin_lock(&backtrace_lock);
+		pr_warning("IPI backtrace for cpu %d\n", cpu);
+		show_regs(regs);
+		raw_spin_unlock(&backtrace_lock);
+		cpu_clear(cpu, backtrace_mask);
+	}
+}
+
 /*
  * Main handler for inter-processor interrupts
  */
@@ -577,12 +706,22 @@ void handle_IPI(int ipinr, struct pt_regs *regs)
 
 	switch (ipinr) {
 	case IPI_WAKEUP:
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_start(ipinr);
+		mt_trace_ISR_end(ipinr);
+#endif
 		break;
 
 #ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
 	case IPI_TIMER:
 		irq_enter();
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_start(ipinr);
+#endif
 		tick_receive_broadcast();
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_end(ipinr);
+#endif
 		irq_exit();
 		break;
 #endif
@@ -593,37 +732,82 @@ void handle_IPI(int ipinr, struct pt_regs *regs)
 
 	case IPI_CALL_FUNC:
 		irq_enter();
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_start(ipinr);
+#endif
 		generic_smp_call_function_interrupt();
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_end(ipinr);
+#endif
 		irq_exit();
 		break;
 
 	case IPI_CALL_FUNC_SINGLE:
 		irq_enter();
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_start(ipinr);
+#endif
 		generic_smp_call_function_single_interrupt();
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_end(ipinr);
+#endif
 		irq_exit();
 		break;
 
 	case IPI_CPU_STOP:
 		irq_enter();
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_start(ipinr);
+#endif
 		ipi_cpu_stop(cpu);
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_end(ipinr);
+#endif
 		irq_exit();
 		break;
 
 #ifdef CONFIG_IRQ_WORK
 	case IPI_IRQ_WORK:
 		irq_enter();
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_start(ipinr);
+#endif
 		irq_work_run();
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_end(ipinr);
+#endif
 		irq_exit();
 		break;
 #endif
 
 	case IPI_COMPLETION:
 		irq_enter();
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_start(ipinr);
+#endif
 		ipi_complete(cpu);
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_end(ipinr);
+#endif
 		irq_exit();
 		break;
 
+	case IPI_CPU_BACKTRACE:
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_start(ipinr);
+#endif
+		ipi_cpu_backtrace(cpu, regs);
+#ifdef CONFIG_MTPROF
+		mt_trace_ISR_end(ipinr);
+#endif
+		break;
+
 	default:
+#ifdef CONFIG_TRUSTY
+		if (ipinr >= IPI_CUSTOM_FIRST && ipinr <= IPI_CUSTOM_LAST)
+			handle_domain_irq(ipi_custom_irq_domain, ipinr, regs);
+		else
+#endif
 		printk(KERN_CRIT "CPU%u: Unknown IPI message 0x%x\n",
 		       cpu, ipinr);
 		break;
@@ -633,6 +817,65 @@ void handle_IPI(int ipinr, struct pt_regs *regs)
 		trace_ipi_exit(ipi_types[ipinr]);
 	set_irq_regs(old_regs);
 }
+
+#ifdef CONFIG_TRUSTY
+static void custom_ipi_enable(struct irq_data *data)
+{
+	/*
+	 * Always trigger a new ipi on enable. This only works for clients
+	 * that then clear the ipi before unmasking interrupts.
+	 */
+	smp_cross_call(cpumask_of(smp_processor_id()), data->irq);
+}
+
+static void custom_ipi_disable(struct irq_data *data)
+{
+}
+
+static struct irq_chip custom_ipi_chip = {
+	.name			= "CustomIPI",
+	.irq_enable		= custom_ipi_enable,
+	.irq_disable		= custom_ipi_disable,
+};
+
+static void handle_custom_ipi_irq(unsigned int irq, struct irq_desc *desc)
+{
+	if (!desc->action) {
+		pr_crit("CPU%u: Unknown IPI message 0x%x, no custom handler\n",
+			smp_processor_id(), irq);
+		return;
+	}
+
+	if (!cpumask_test_cpu(smp_processor_id(), desc->percpu_enabled))
+		return; /* IPIs may not be maskable in hardware */
+
+	handle_percpu_devid_irq(irq, desc);
+}
+
+static int __init smp_custom_ipi_init(void)
+{
+	int ipinr;
+
+	/* alloc descs for these custom ipis/irqs before using them */
+	irq_alloc_descs(IPI_CUSTOM_FIRST, 0,
+		IPI_CUSTOM_LAST - IPI_CUSTOM_FIRST + 1, 0);
+
+	for (ipinr = IPI_CUSTOM_FIRST; ipinr <= IPI_CUSTOM_LAST; ipinr++) {
+		irq_set_percpu_devid(ipinr);
+		irq_set_chip_and_handler(ipinr, &custom_ipi_chip,
+					 handle_custom_ipi_irq);
+		set_irq_flags(ipinr, IRQF_VALID | IRQF_NOAUTOEN);
+	}
+	ipi_custom_irq_domain = irq_domain_add_legacy(NULL,
+					IPI_CUSTOM_LAST - IPI_CUSTOM_FIRST + 1,
+					IPI_CUSTOM_FIRST, IPI_CUSTOM_FIRST,
+					&irq_domain_simple_ops,
+					&custom_ipi_chip);
+
+	return 0;
+}
+core_initcall(smp_custom_ipi_init);
+#endif
 
 void smp_send_reschedule(int cpu)
 {

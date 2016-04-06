@@ -1,0 +1,98 @@
+/*
+ * eastaeon's GPIO SoC device tree source
+ * sanford.lin
+ */
+
+&aeon_gpio {
+	pinctrl-names = "default",
+					"aeon_chr_ce0", "aeon_chr_ce1",
+					"aeon_factory_id",
+					"aeon_flash_enf0", "aeon_flash_enf1", "aeon_flash_enm0", "aeon_flash_enm1",
+					"aeon_flash_enm_pwm";
+
+	pinctrl-0 = <&aeon_pins_default>;
+
+	/* charge_ce-gpio output */
+	pinctrl-1 = <&aeon_pins_chr_ce0_gpio>;
+	pinctrl-2 = <&aeon_pins_chr_ce1_gpio>;
+
+	/* factory_id-gpio input */
+	pinctrl-3 = <&aeon_pins_factory_id_gpio>;
+	//aeon_factory_id = <xx>; //GPIO PIN
+
+	/* flashlight-gpio output */
+	pinctrl-4 = <&aeon_pins_flash_enf0_gpio>;
+	pinctrl-5 = <&aeon_pins_flash_enf1_gpio>;
+
+	pinctrl-6 = <&aeon_pins_flash_enm0_gpio>;
+	pinctrl-7 = <&aeon_pins_flash_enm1_gpio>;
+
+	pinctrl-8 = <&aeon_pins_flash_enm_pwm_gpio>;
+
+	status = "okay";
+};
+&pio {
+	aeon_pins_default: aeon@0 {
+	};
+
+	/*GPIO_CHARGER_CE_PIN*/
+	aeon_pins_chr_ce0_gpio: aeon@1 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO82__FUNC_GPIO82>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	aeon_pins_chr_ce1_gpio: aeon@2 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO82__FUNC_GPIO82>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+
+	/*GPIO_FACTORY_ID_PIN*/
+	aeon_pins_factory_id_gpio: aeon@3 {
+		//pins_cmd_dat {
+			//pins = <PINMUX_GPIOXX__FUNC_GPIOXX>;
+			//slew-rate = <0>;
+			//bias-pull-up = <00>;
+		//};
+	};
+
+	/*GPIO_FLASHLIGHT_EN_PIN*/
+	aeon_pins_flash_enf0_gpio: aeon@4 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO43__FUNC_GPIO43>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	aeon_pins_flash_enf1_gpio: aeon@5 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO43__FUNC_GPIO43>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	aeon_pins_flash_enm0_gpio: aeon@6 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO42__FUNC_GPIO42>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	aeon_pins_flash_enm1_gpio: aeon@7 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO42__FUNC_GPIO42>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	aeon_pins_flash_enm_pwm_gpio: aeon@8 {
+		//pins_cmd_dat {
+			//pins = <PINMUX_GPIOXX__FUNC_PWMX>;
+		//};
+	};
+
+};

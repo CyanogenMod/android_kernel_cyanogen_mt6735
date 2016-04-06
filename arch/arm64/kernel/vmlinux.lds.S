@@ -11,8 +11,8 @@
 
 #include "image.h"
 
-#define ARM_EXIT_KEEP(x)
-#define ARM_EXIT_DISCARD(x)	x
+#define ARM_EXIT_KEEP(x)	x
+#define ARM_EXIT_DISCARD(x)
 
 OUTPUT_ARCH(aarch64)
 ENTRY(_text)
@@ -54,6 +54,10 @@ SECTIONS
 		_text = .;
 		HEAD_TEXT
 	}
+#ifdef CONFIG_MTK_AEE_MRDUMP
+	.mrdump ALIGN (0x400): {
+	}
+#endif
 	.text : {			/* Real text segment		*/
 		_stext = .;		/* Text and read-only data	*/
 			__exception_text_start = .;

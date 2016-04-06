@@ -1,0 +1,9 @@
+Synaptics dsx driver for MTK platform:
+This is a sample code, users should modify hardware dependent settings in tpd_custom_synaptics.h as requirements.
+
+V5.1 change log:
+Released on 2014/06/11
+1. Based on DSx 2.0 generic driver.
+2. Set I2C default address to 0x20.
+3. Use 0d button as default.
+4. Change KEY_HOME to KEY_HOMEPAGE in tpd_custom_synaptics.h

@@ -1,0 +1,7 @@
+#
+# Touchscreen driver configuration
+#
+if TOUCHSCREEN_MTK_SYNAPTICS_S2174
+
+
+endif

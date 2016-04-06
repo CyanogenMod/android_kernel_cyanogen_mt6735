@@ -65,7 +65,8 @@
 #define SIOCDIFADDR	0x8936		/* delete PA address		*/
 #define	SIOCSIFHWBROADCAST	0x8937	/* set hardware broadcast addr	*/
 #define SIOCGIFCOUNT	0x8938		/* get number of devices */
-
+#define SIOCKILLADDR	0x8939		/* kill sockets with this local addr */
+#define SIOCKILLSOCK	0x893a		/* MTK_NET_CHANGES kill socket with by uid */
 #define SIOCGIFBR	0x8940		/* Bridging support		*/
 #define SIOCSIFBR	0x8941		/* Set bridging options 	*/
 

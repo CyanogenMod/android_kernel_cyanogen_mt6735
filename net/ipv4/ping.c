@@ -789,7 +789,8 @@ static int ping_v4_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *m
 
 	flowi4_init_output(&fl4, ipc.oif, sk->sk_mark, tos,
 			   RT_SCOPE_UNIVERSE, sk->sk_protocol,
-			   inet_sk_flowi_flags(sk), faddr, saddr, 0, 0);
+			   inet_sk_flowi_flags(sk), faddr, saddr, 0, 0,
+			   sock_i_uid(sk));
 
 	security_sk_classify_flow(sk, flowi4_to_flowi(&fl4));
 	rt = ip_route_output_flow(net, &fl4, sk);
@@ -979,10 +980,11 @@ void ping_rcv(struct sk_buff *skb)
 		pr_debug("rcv on socket %p\n", sk);
 		if (skb2)
 			ping_queue_rcv_skb(sk, skb2);
-		sock_put(sk);
+		/*mtk_net: don't put sock here, do sock_put after free skb*/
+		/* sock_put(sk); */			
 		return;
 	}
-	pr_debug("no socket, dropping\n");
+	pr_info("[mtk_net][ping_debug]no socket, dropping\n");
 
 	/* We're called from icmp_rcv(). kfree_skb() is done there. */
 }

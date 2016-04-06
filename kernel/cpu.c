@@ -23,6 +23,7 @@
 #include <trace/events/power.h>
 
 #include "smpboot.h"
+#include "mt_sched_mon.h"
 
 #ifdef CONFIG_SMP
 /* Serializes the updates to cpu_online_mask, cpu_present_mask */
@@ -47,7 +48,11 @@ void cpu_maps_update_done(void)
 }
 EXPORT_SYMBOL(cpu_notifier_register_done);
 
+#if defined(MTK_CPU_HOTPLUG_DEBUG_1) || defined(MTK_CPU_HOTPLUG_DEBUG_2)
+RAW_NOTIFIER_HEAD(cpu_chain);
+#else
 static RAW_NOTIFIER_HEAD(cpu_chain);
+#endif
 
 /* If set, cpu_up and cpu_down will return -EBUSY and do nothing.
  * Should always be manipulated under cpu_add_remove_lock
@@ -58,22 +63,23 @@ static int cpu_hotplug_disabled;
 
 static struct {
 	struct task_struct *active_writer;
-	struct mutex lock; /* Synchronizes accesses to refcount, */
-	/*
+	/* wait queue to wake up the active_writer */
+	wait_queue_head_t wq;
+	/* verifies that no writer will get active while readers are active */
+	struct mutex lock;
+	 /*
 	 * Also blocks the new readers during
 	 * an ongoing cpu hotplug operation.
 	 */
-	int refcount;
-	/* And allows lockless put_online_cpus(). */
-	atomic_t puts_pending;
+	atomic_t refcount;
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 	struct lockdep_map dep_map;
 #endif
 } cpu_hotplug = {
 	.active_writer = NULL,
+	.wq = __WAIT_QUEUE_HEAD_INITIALIZER(cpu_hotplug.wq),
 	.lock = __MUTEX_INITIALIZER(cpu_hotplug.lock),
-	.refcount = 0,
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 	.dep_map = {.name = "cpu_hotplug.lock" },
 #endif
@@ -93,7 +99,7 @@ void get_online_cpus(void)
 		return;
 	cpuhp_lock_acquire_read();
 	mutex_lock(&cpu_hotplug.lock);
-	cpu_hotplug.refcount++;
+	atomic_inc(&cpu_hotplug.refcount);
 	mutex_unlock(&cpu_hotplug.lock);
 }
 EXPORT_SYMBOL_GPL(get_online_cpus);
@@ -105,7 +111,7 @@ bool try_get_online_cpus(void)
 	if (!mutex_trylock(&cpu_hotplug.lock))
 		return false;
 	cpuhp_lock_acquire_tryread();
-	cpu_hotplug.refcount++;
+	atomic_inc(&cpu_hotplug.refcount);
 	mutex_unlock(&cpu_hotplug.lock);
 	return true;
 }
@@ -113,20 +119,18 @@ EXPORT_SYMBOL_GPL(try_get_online_cpus);
 
 void put_online_cpus(void)
 {
+	int refcount;
+
 	if (cpu_hotplug.active_writer == current)
 		return;
-	if (!mutex_trylock(&cpu_hotplug.lock)) {
-		atomic_inc(&cpu_hotplug.puts_pending);
-		cpuhp_lock_release();
-		return;
-	}
 
-	if (WARN_ON(!cpu_hotplug.refcount))
-		cpu_hotplug.refcount++; /* try to fix things up */
+	refcount = atomic_dec_return(&cpu_hotplug.refcount);
+	if (WARN_ON(refcount < 0)) /* try to fix things up */
+		atomic_inc(&cpu_hotplug.refcount);
 
-	if (!--cpu_hotplug.refcount && unlikely(cpu_hotplug.active_writer))
-		wake_up_process(cpu_hotplug.active_writer);
-	mutex_unlock(&cpu_hotplug.lock);
+	if (refcount <= 0 && waitqueue_active(&cpu_hotplug.wq))
+		wake_up(&cpu_hotplug.wq);
+
 	cpuhp_lock_release();
 
 }
@@ -156,23 +160,20 @@ EXPORT_SYMBOL_GPL(put_online_cpus);
  */
 void cpu_hotplug_begin(void)
 {
-	cpu_hotplug.active_writer = current;
+	DEFINE_WAIT(wait);
 
+	cpu_hotplug.active_writer = current;
 	cpuhp_lock_acquire();
+
 	for (;;) {
 		mutex_lock(&cpu_hotplug.lock);
-		if (atomic_read(&cpu_hotplug.puts_pending)) {
-			int delta;
-
-			delta = atomic_xchg(&cpu_hotplug.puts_pending, 0);
-			cpu_hotplug.refcount -= delta;
-		}
-		if (likely(!cpu_hotplug.refcount))
+		prepare_to_wait(&cpu_hotplug.wq, &wait, TASK_UNINTERRUPTIBLE);
+		if (likely(!atomic_read(&cpu_hotplug.refcount)))
 			break;
-		__set_current_state(TASK_UNINTERRUPTIBLE);
 		mutex_unlock(&cpu_hotplug.lock);
 		schedule();
 	}
+	finish_wait(&cpu_hotplug.wq, &wait);
 }
 
 void cpu_hotplug_done(void)
@@ -209,6 +210,26 @@ void cpu_hotplug_enable(void)
 int __ref register_cpu_notifier(struct notifier_block *nb)
 {
 	int ret;
+#ifdef MTK_CPU_HOTPLUG_DEBUG_0
+	int index = 0;
+#ifdef CONFIG_KALLSYMS
+	char namebuf[128] = {0};
+	const char *symname;
+
+	symname = kallsyms_lookup((unsigned long)nb->notifier_call,
+			NULL, NULL, NULL, namebuf);
+	if (symname)
+		pr_info("[cpu_ntf] <%02d>%08lx (%s)\n",
+			index++, (unsigned long)nb->notifier_call, symname);
+	else
+		pr_info("[cpu_ntf] <%02d>%08lx\n",
+			index++, (unsigned long)nb->notifier_call);
+#else
+	pr_info("[cpu_ntf] <%02d>%08lx\n",
+		index++, (unsigned long)nb->notifier_call);
+#endif
+#endif /* MTK_CPU_HOTPLUG_DEBUG_0 */
+
 	cpu_maps_update_begin();
 	ret = raw_notifier_chain_register(&cpu_chain, nb);
 	cpu_maps_update_done();
@@ -373,27 +394,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
 			__func__, cpu);
 		goto out_release;
 	}
-
-	/*
-	 * By now we've cleared cpu_active_mask, wait for all preempt-disabled
-	 * and RCU users of this state to go away such that all new such users
-	 * will observe it.
-	 *
-	 * For CONFIG_PREEMPT we have preemptible RCU and its sync_rcu() might
-	 * not imply sync_sched(), so explicitly call both.
-	 *
-	 * Do sync before park smpboot threads to take care the rcu boost case.
-	 */
-#ifdef CONFIG_PREEMPT
-	synchronize_sched();
-#endif
-	synchronize_rcu();
-
 	smpboot_park_threads(cpu);
-
-	/*
-	 * So now all preempt/rcu users must observe !cpu_active().
-	 */
 
 	err = __stop_machine(take_cpu_down, &tcd_param, cpumask_of(cpu));
 	if (err) {
@@ -413,6 +414,9 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
 	 */
 	while (!idle_cpu(cpu))
 		cpu_relax();
+#ifdef CONFIG_MT_SCHED_MONITOR
+	mt_save_irq_counts(CPU_DOWN);
+#endif
 
 	/* This actually kills the CPU. */
 	__cpu_die(cpu);
@@ -448,6 +452,37 @@ out:
 }
 EXPORT_SYMBOL(cpu_down);
 #endif /*CONFIG_HOTPLUG_CPU*/
+
+/*
+ * Unpark per-CPU smpboot kthreads at CPU-online time.
+ */
+static int smpboot_thread_call(struct notifier_block *nfb,
+			       unsigned long action, void *hcpu)
+{
+	int cpu = (long)hcpu;
+
+	switch (action & ~CPU_TASKS_FROZEN) {
+
+	case CPU_ONLINE:
+		smpboot_unpark_threads(cpu);
+		break;
+
+	default:
+		break;
+	}
+
+	return NOTIFY_OK;
+}
+
+static struct notifier_block smpboot_thread_notifier = {
+	.notifier_call = smpboot_thread_call,
+	.priority = CPU_PRI_SMPBOOT,
+};
+
+void __cpuinit smpboot_thread_init(void)
+{
+	register_cpu_notifier(&smpboot_thread_notifier);
+}
 
 /* Requires cpu_add_remove_lock to be held */
 static int _cpu_up(unsigned int cpu, int tasks_frozen)
@@ -488,9 +523,10 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen)
 		goto out_notify;
 	BUG_ON(!cpu_online(cpu));
 
+#if 0
 	/* Wake the per cpu threads */
 	smpboot_unpark_threads(cpu);
-
+#endif
 	/* Now call notifier in preparation. */
 	cpu_notify(CPU_ONLINE | mod, hcpu);
 
@@ -575,6 +611,7 @@ int disable_nonboot_cpus(void)
 	cpu_maps_update_done();
 	return error;
 }
+EXPORT_SYMBOL_GPL(disable_nonboot_cpus);
 
 void __weak arch_enable_nonboot_cpus_begin(void)
 {
@@ -615,6 +652,7 @@ void __ref enable_nonboot_cpus(void)
 out:
 	cpu_maps_update_done();
 }
+EXPORT_SYMBOL_GPL(enable_nonboot_cpus);
 
 static int __init alloc_frozen_cpus(void)
 {
@@ -791,3 +829,23 @@ void init_cpu_online(const struct cpumask *src)
 {
 	cpumask_copy(to_cpumask(cpu_online_bits), src);
 }
+
+static ATOMIC_NOTIFIER_HEAD(idle_notifier);
+
+void idle_notifier_register(struct notifier_block *n)
+{
+	atomic_notifier_chain_register(&idle_notifier, n);
+}
+EXPORT_SYMBOL_GPL(idle_notifier_register);
+
+void idle_notifier_unregister(struct notifier_block *n)
+{
+	atomic_notifier_chain_unregister(&idle_notifier, n);
+}
+EXPORT_SYMBOL_GPL(idle_notifier_unregister);
+
+void idle_notifier_call_chain(unsigned long val)
+{
+	atomic_notifier_call_chain(&idle_notifier, val, NULL);
+}
+EXPORT_SYMBOL_GPL(idle_notifier_call_chain);

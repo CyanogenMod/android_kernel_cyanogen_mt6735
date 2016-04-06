@@ -74,6 +74,7 @@
 #define ARM_CPU_PART_CORTEX_A12		0x4100c0d0
 #define ARM_CPU_PART_CORTEX_A17		0x4100c0e0
 #define ARM_CPU_PART_CORTEX_A15		0x4100c0f0
+#define ARM_CPU_PART_CORTEX_A53		0x4100d030
 #define ARM_CPU_PART_MASK		0xff00fff0
 
 #define ARM_CPU_XSCALE_ARCH_MASK	0xe000
@@ -253,4 +254,20 @@ static inline int cpu_is_pj4(void)
 #else
 #define cpu_is_pj4()	0
 #endif
+
+static inline int __attribute_const__ cpuid_feature_extract_field(u32 features,
+								  int field)
+{
+	int feature = (features >> field) & 15;
+
+	/* feature registers are signed values */
+	if (feature > 8)
+		feature -= 16;
+
+	return feature;
+}
+
+#define cpuid_feature_extract(reg, field) \
+	cpuid_feature_extract_field(read_cpuid_ext(reg), field)
+
 #endif

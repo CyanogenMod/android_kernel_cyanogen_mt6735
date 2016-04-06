@@ -1452,6 +1452,12 @@ struct xhci_hcd {
 	/* Our HCD's current interrupter register set */
 	struct	xhci_intr_reg __iomem *ir_set;
 
+	#ifdef CONFIG_USB_XHCI_MTK
+	unsigned long base_regs;
+	unsigned long sif_regs;
+	unsigned long sif2_regs;
+	#endif
+
 	/* Cached register copies of read-only HC data */
 	__u32		hcs_params1;
 	__u32		hcs_params2;
@@ -1505,7 +1511,9 @@ struct xhci_hcd {
 	struct xhci_virt_device	*devs[MAX_HC_SLOTS];
 	/* For keeping track of bandwidth domains per roothub. */
 	struct xhci_root_port_bw_info	*rh_bw;
-
+#ifdef CONFIG_SSUSB_MTK_XHCI
+	void *sch_ports;
+#endif
 	/* DMA pools */
 	struct dma_pool	*device_pool;
 	struct dma_pool	*segment_pool;
@@ -1537,7 +1545,9 @@ struct xhci_hcd {
 #define	XHCI_LINK_TRB_QUIRK	(1 << 0)
 #define XHCI_RESET_EP_QUIRK	(1 << 1)
 #define XHCI_NEC_HOST		(1 << 2)
+#ifndef CONFIG_USB_XHCI_MTK
 #define XHCI_AMD_PLL_FIX	(1 << 3)
+#endif
 #define XHCI_SPURIOUS_SUCCESS	(1 << 4)
 /*
  * Certain Intel host controllers have a limit to the number of endpoint
@@ -1552,7 +1562,9 @@ struct xhci_hcd {
 #define XHCI_BROKEN_MSI		(1 << 6)
 #define XHCI_RESET_ON_RESUME	(1 << 7)
 #define	XHCI_SW_BW_CHECKING	(1 << 8)
+#ifndef CONFIG_USB_XHCI_MTK
 #define XHCI_AMD_0x96_HOST	(1 << 9)
+#endif
 #define XHCI_TRUST_TX_LENGTH	(1 << 10)
 #define XHCI_LPM_SUPPORT	(1 << 11)
 #define XHCI_INTEL_HOST		(1 << 12)
@@ -1565,6 +1577,7 @@ struct xhci_hcd {
 /* For controllers with a broken beyond repair streams implementation */
 #define XHCI_BROKEN_STREAMS	(1 << 19)
 #define XHCI_PME_STUCK_QUIRK	(1 << 20)
+#define XHCI_MTK_HOST		(1 << 21)
 	unsigned int		num_active_eps;
 	unsigned int		limit_active_eps;
 	/* There are two roothubs to keep track of bus suspend info for */
@@ -1735,6 +1748,11 @@ struct xhci_command *xhci_alloc_command(struct xhci_hcd *xhci,
 void xhci_urb_free_priv(struct xhci_hcd *xhci, struct urb_priv *urb_priv);
 void xhci_free_command(struct xhci_hcd *xhci,
 		struct xhci_command *command);
+
+#if defined(CONFIG_USB_XHCI_MTK)
+int xhci_register_plat(void);
+void xhci_unregister_plat(void);
+#endif
 
 /* xHCI host controller glue */
 typedef void (*xhci_get_quirks_t)(struct device *, struct xhci_hcd *);

@@ -72,6 +72,8 @@ source "drivers/hwmon/Kconfig"
 
 source "drivers/thermal/Kconfig"
 
+source "drivers/trusty/Kconfig"
+
 source "drivers/watchdog/Kconfig"
 
 source "drivers/ssb/Kconfig"
@@ -99,6 +101,8 @@ source "drivers/mmc/Kconfig"
 source "drivers/memstick/Kconfig"
 
 source "drivers/leds/Kconfig"
+
+source "drivers/switch/Kconfig"
 
 source "drivers/accessibility/Kconfig"
 

@@ -38,3 +38,18 @@ obj-$(CONFIG_IRQ_CROSSBAR)		+= irq-crossbar.o
 obj-$(CONFIG_BRCMSTB_L2_IRQ)		+= irq-brcmstb-l2.o \
 					   irq-bcm7120-l2.o
 obj-$(CONFIG_KEYSTONE_IRQ)		+= irq-keystone.o
+obj-$(CONFIG_ARCH_MEDIATEK)		+= irq-mtk-sysirq.o
+
+# Mediatek solution: GIC & EIC
+MTK_PLATFORM := $(subst ",,$(CONFIG_MTK_PLATFORM))
+subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/include
+subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include
+
+obj-$(CONFIG_MTK_GIC)                   += irq-mt-gic.o
+obj-$(CONFIG_MTK_EIC)                   += irq-mt-eic.o
+obj-$(CONFIG_MTK_INTPOL)		+= irq-mtk-intpol.o
+
+ifeq ($(CONFIG_MT_ENG_BUILD),y)
+CFLAGS_irq-mt-gic.o := -DDEBUG
+CFLAGS_irq-mt-eic.o := -DDEBUG
+endif

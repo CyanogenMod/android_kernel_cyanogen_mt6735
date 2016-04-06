@@ -5,6 +5,27 @@
 # Rewritten to use lists instead of if-statements.
 #
 
+# sanford.lin add start on 20160315 for aeon
+-include $(srctree)/../$(MTK_TARGET_PROJECT_FOLDER)/eastaeon.mk
+
+subdir-ccflags-y += $(foreach t,$(ADD_GLOBAL_DEFINE_BY_NAME),$(if $(filter-out no NO none NONE false FALSE,$($(t))),-D$(t)))
+
+ifeq ($(AEON_SUPPORT),yes)
+subdir-ccflags-y += -DCONFIG_LCM_HEIGHT=\"$(LCM_HEIGHT)\"
+subdir-ccflags-y += -DCONFIG_LCM_WIDTH=\"$(LCM_WIDTH)\"
+
+subdir-ccflags-y += $(foreach t,$(AEON_ADD_GLOBAL_DEFINE_BY_NAME),$(if $(filter-out no NO none NONE false FALSE,$($(t))),-D$(t)))
+subdir-ccflags-y += $(foreach t,$(AEON_ADD_GLOBAL_DEFINE_BY_VALUE),$(if $(filter-out no NO none NONE false FALSE,$($(t))),$(foreach v,$(shell echo $($(t)) | tr '[a-z]' '[A-Z]'),-D$(v))))
+
+ifneq ($(AEON_CHARGE_IC),)
+ifneq ($(AEON_CHARGE_IC),no)
+subdir-ccflags-y += -DCONFIG_MTK_$(AEON_CHARGE_IC)_SUPPORT
+endif
+endif
+
+endif
+# sanford.lin add end on 20160315 for aeon
+
 obj-y				+= irqchip/
 obj-y				+= bus/
 
@@ -104,6 +125,7 @@ obj-$(CONFIG_W1)		+= w1/
 obj-$(CONFIG_POWER_SUPPLY)	+= power/
 obj-$(CONFIG_HWMON)		+= hwmon/
 obj-$(CONFIG_THERMAL)		+= thermal/
+obj-$(CONFIG_TRUSTY)		+= trusty/
 obj-$(CONFIG_WATCHDOG)		+= watchdog/
 obj-$(CONFIG_MD)		+= md/
 obj-$(CONFIG_BT)		+= bluetooth/
@@ -117,6 +139,7 @@ obj-$(CONFIG_CPU_IDLE)		+= cpuidle/
 obj-y				+= mmc/
 obj-$(CONFIG_MEMSTICK)		+= memstick/
 obj-y				+= leds/
+obj-$(CONFIG_SWITCH)		+= switch/
 obj-$(CONFIG_INFINIBAND)	+= infiniband/
 obj-$(CONFIG_SGI_SN)		+= sn/
 obj-y				+= firmware/

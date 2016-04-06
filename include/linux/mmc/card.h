@@ -60,6 +60,7 @@ struct mmc_ext_csd {
 	u8			packed_event_en;
 	unsigned int		part_time;		/* Units: ms */
 	unsigned int		sa_timeout;		/* Units: 100ns */
+	unsigned int		sleep_notification_time;	/* Units: 10us */
 	unsigned int		generic_cmd6_time;	/* Units: 10ms */
 	unsigned int            power_off_longtime;     /* Units: ms */
 	u8			power_off_notification;	/* state */
@@ -237,7 +238,60 @@ struct mmc_part {
 #define MMC_BLK_DATA_AREA_GP	(1<<2)
 #define MMC_BLK_DATA_AREA_RPMB	(1<<3)
 };
+#ifdef MTK_BKOPS_IDLE_MAYA
+#define BKOPS_NUM_OF_SEVERITY_LEVELS 4
+struct mmc_bkops_stats {
+	spinlock_t lock;
+	bool enabled;
+	unsigned int hpi;	/*hpi issued */
+	unsigned int suspend;	/*card sleed issued */
+	bool print_stats;
+	unsigned int bkops_level[BKOPS_NUM_OF_SEVERITY_LEVELS];
+};
 
+/**
+ * struct mmc_bkops_info - BKOPS data
+ * @dw:	Idle time bkops delayed work
+ * @host_delay_ms:	The host controller time to start bkops
+ * @delay_ms:	The time to start the BKOPS
+ *        delayed work once MMC thread is idle
+ * @min_sectors_to_queue_delayed_work: the changed
+ *        number of sectors that should issue check for BKOPS
+ *        need
+ * @bkops_stats: BKOPS statistics
+ * @size_percentage_to_queue_delayed_work: the changed
+ *        percentage of sectors that should issue check for
+ *        BKOPS need
+ * @cancel_delayed_work: A flag to indicate if the delayed work
+ *        should be cancelled
+ * @sectors_changed:  number of  sectors written or
+ *       discard since the last idle BKOPS were scheduled
+ */
+struct mmc_bkops_info {
+	struct delayed_work dw;
+	unsigned int host_delay_ms;
+	unsigned int delay_ms;
+	unsigned int min_sectors_to_queue_delayed_work;
+	unsigned int size_percentage_to_queue_delayed_work;
+	struct mmc_bkops_stats bkops_stats;
+/*
+ * A default time for checking the need for non urgent BKOPS once mmcqd
+ * is idle.
+ */
+#define MMC_IDLE_BKOPS_TIME_MS 200
+	bool cancel_delayed_work;
+	unsigned int sectors_changed;
+/*
+ * Since canceling the delayed work might have significant effect on the
+ * performance of small requests we won't queue the delayed work every time
+ * mmcqd thread is idle.
+ * The delayed work for idle BKOPS will be scheduled only after a
+ * significant
+ * amount of write or discard data.
+ */
+#define BKOPS_SIZE_PERCENTAGE_TO_QUEUE_DELAYED_WORK 0	/* 1% */
+};
+#endif
 /*
  * MMC device
  */
@@ -258,7 +312,14 @@ struct mmc_card {
 #define MMC_CARD_SDXC		(1<<3)		/* card is SDXC */
 #define MMC_CARD_REMOVED	(1<<4)		/* card has been removed */
 #define MMC_STATE_DOING_BKOPS	(1<<5)		/* card is doing BKOPS */
+#ifdef MTK_BKOPS_IDLE_MAYA	/* maya is 1<<11 */
+#define MMC_STATE_NEED_BKOPS	(1<<12)	/* card needs to do BKOPS */
+#endif
+#ifdef CONFIG_MMC_FFU
+#define MMC_STATE_FFUED         (1<<22)     /* card has been FFUed */
+#endif
 #define MMC_STATE_SUSPENDED	(1<<6)		/* card is suspended */
+#define MMC_STATE_SLEEP     (1<<9)      /*card is sleep */
 	unsigned int		quirks; 	/* card quirks */
 #define MMC_QUIRK_LENIENT_FN0	(1<<0)		/* allow SDIO FN0 writes outside of the VS CCCR range */
 #define MMC_QUIRK_BLKSZ_FOR_BYTE_MODE (1<<1)	/* use func->cur_blksize */
@@ -275,6 +336,10 @@ struct mmc_card {
 #define MMC_QUIRK_LONG_READ_TIME (1<<9)		/* Data read time > CSD says */
 #define MMC_QUIRK_SEC_ERASE_TRIM_BROKEN (1<<10)	/* Skip secure for erase/trim */
 #define MMC_QUIRK_BROKEN_IRQ_POLLING	(1<<11)	/* Polling SDIO_CCCR_INTx could create a fake interrupt */
+#ifdef CONFIG_MTK_EMMC_CACHE
+#define MMC_QUIRK_DISABLE_CACHE     (1<<12) /* eMMC cache feature */
+#endif
+#define MMC_QUIRK_DISABLE_SNO       (1<<13)     /* disable sleep notifation, this may cause card busy long time on some eMMC*/
 
 	unsigned int		erase_size;	/* erase size in sectors */
  	unsigned int		erase_shift;	/* if erase unit is power 2 */
@@ -306,6 +371,9 @@ struct mmc_card {
 	struct dentry		*debugfs_root;
 	struct mmc_part	part[MMC_NUM_PHY_PARTITION]; /* physical partitions */
 	unsigned int    nr_parts;
+#ifdef MTK_BKOPS_IDLE_MAYA
+	struct mmc_bkops_info bkops_info;
+#endif
 };
 
 /*
@@ -423,6 +491,9 @@ static inline void __maybe_unused remove_quirk(struct mmc_card *card, int data)
 #define mmc_card_ext_capacity(c) ((c)->state & MMC_CARD_SDXC)
 #define mmc_card_removed(c)	((c) && ((c)->state & MMC_CARD_REMOVED))
 #define mmc_card_doing_bkops(c)	((c)->state & MMC_STATE_DOING_BKOPS)
+#ifdef MTK_BKOPS_IDLE_MAYA
+#define mmc_card_need_bkops(c)	((c)->state & MMC_STATE_NEED_BKOPS)
+#endif
 #define mmc_card_suspended(c)	((c)->state & MMC_STATE_SUSPENDED)
 
 #define mmc_card_set_present(c)	((c)->state |= MMC_STATE_PRESENT)
@@ -432,9 +503,16 @@ static inline void __maybe_unused remove_quirk(struct mmc_card *card, int data)
 #define mmc_card_set_removed(c) ((c)->state |= MMC_CARD_REMOVED)
 #define mmc_card_set_doing_bkops(c)	((c)->state |= MMC_STATE_DOING_BKOPS)
 #define mmc_card_clr_doing_bkops(c)	((c)->state &= ~MMC_STATE_DOING_BKOPS)
+#ifdef MTK_BKOPS_IDLE_MAYA
+#define mmc_card_set_need_bkops(c)	((c)->state |= MMC_STATE_NEED_BKOPS)
+#define mmc_card_clr_need_bkops(c)	((c)->state &= ~MMC_STATE_NEED_BKOPS)
+#endif
 #define mmc_card_set_suspended(c) ((c)->state |= MMC_STATE_SUSPENDED)
 #define mmc_card_clr_suspended(c) ((c)->state &= ~MMC_STATE_SUSPENDED)
 
+#define mmc_card_is_sleep(c)      ((c)->state & MMC_STATE_SLEEP)
+#define mmc_card_set_sleep(c)     ((c)->state |= MMC_STATE_SLEEP)
+#define mmc_card_clr_sleep(c)     ((c)->state &= ~MMC_STATE_SLEEP)
 /*
  * Quirk add/remove for MMC products.
  */

@@ -1,0 +1,7 @@
+#
+# Touchscreen driver configuration
+#
+if TOUCHSCREEN_MTK_AEON_NT11205_HD720_HLT_8536
+
+
+endif

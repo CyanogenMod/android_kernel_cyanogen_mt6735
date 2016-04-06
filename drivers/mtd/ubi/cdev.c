@@ -172,6 +172,7 @@ static int vol_cdev_fsync(struct file *file, loff_t start, loff_t end,
 	struct ubi_device *ubi = desc->vol->ubi;
 	struct inode *inode = file_inode(file);
 	int err;
+
 	mutex_lock(&inode->i_mutex);
 	err = ubi_sync(ubi->ubi_num);
 	mutex_unlock(&inode->i_mutex);
@@ -310,8 +311,13 @@ static ssize_t vol_cdev_direct_write(struct file *file, const char __user *buf,
 			err = -EFAULT;
 			break;
 		}
-
+#ifdef CONFIG_MTK_SLC_BUFFER_SUPPORT
+		if (lnum >= 10)
+			err = ubi_eba_write_tlc_leb(ubi, vol, lnum, tbuf, off, len);
+		else
+#endif
 		err = ubi_eba_write_leb(ubi, vol, lnum, tbuf, off, len);
+
 		if (err)
 			break;
 
@@ -396,7 +402,9 @@ static long vol_cdev_ioctl(struct file *file, unsigned int cmd,
 	case UBI_IOCVOLUP:
 	{
 		int64_t bytes, rsvd_bytes;
-
+#ifdef CONFIG_MTD_UBI_LOWPAGE_BACKUP
+		struct ubi_volume *backup_vol = ubi->volumes[vol_id2idx(ubi, UBI_BACKUP_VOLUME_ID)];
+#endif
 		if (!capable(CAP_SYS_RESOURCE)) {
 			err = -EPERM;
 			break;
@@ -429,6 +437,10 @@ static long vol_cdev_ioctl(struct file *file, unsigned int cmd,
 			ubi_volume_notify(ubi, vol, UBI_VOLUME_UPDATED);
 			revoke_exclusive(desc, UBI_READWRITE);
 		}
+#ifdef CONFIG_MTD_UBI_LOWPAGE_BACKUP
+		ubi_eba_unmap_leb(ubi, backup_vol, 0);
+		ubi_eba_unmap_leb(ubi, backup_vol, 1);
+#endif
 		break;
 	}
 
@@ -507,7 +519,13 @@ static long vol_cdev_ioctl(struct file *file, unsigned int cmd,
 			err = -EFAULT;
 			break;
 		}
+#ifdef CONFIG_MTK_HIBERNATION
+		ubi->ipoh_ops = 1;
+#endif
 		err = ubi_leb_map(desc, req.lnum);
+#ifdef CONFIG_MTK_HIBERNATION
+		ubi->ipoh_ops = 0;
+#endif
 		break;
 	}
 
@@ -521,7 +539,13 @@ static long vol_cdev_ioctl(struct file *file, unsigned int cmd,
 			err = -EFAULT;
 			break;
 		}
+#ifdef CONFIG_MTK_HIBERNATION
+		ubi->ipoh_ops = 1;
+#endif
 		err = ubi_leb_unmap(desc, lnum);
+#ifdef CONFIG_MTK_HIBERNATION
+		ubi->ipoh_ops = 0;
+#endif
 		break;
 	}
 
@@ -582,7 +606,23 @@ static long vol_cdev_ioctl(struct file *file, unsigned int cmd,
 		err = ubiblock_remove(&vi);
 		break;
 	}
+	case UBI_IOCLBMAP:
+	{
+		int LEB[2];
 
+		err = copy_from_user(LEB, argp, sizeof(int)*2);
+		if (err) {
+			err = -EFAULT;
+			break;
+		}
+		LEB[1] = desc->vol->eba_tbl[LEB[0]];
+		err = copy_to_user(argp, LEB, sizeof(int)*2);
+		if (err) {
+			err = -EFAULT;
+			break;
+		}
+		break;
+	}
 	default:
 		err = -ENOTTY;
 		break;

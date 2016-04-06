@@ -11,6 +11,9 @@
 /*
  * This handles all read/write requests to block devices
  */
+#if defined(CONFIG_MT_ENG_BUILD)
+#define DEBUG 1
+#endif
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/backing-dev.h>
@@ -40,6 +43,12 @@
 #include "blk-cgroup.h"
 #include "blk-mq.h"
 
+#if defined(FEATURE_STORAGE_PID_LOGGER)
+#include <linux/vmalloc.h>
+#include <linux/memblock.h>
+unsigned long long system_dram_size = 0;
+#endif
+
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
@@ -47,6 +56,9 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(block_split);
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_unplug);
 
 DEFINE_IDA(blk_queue_ida);
+
+int trap_non_toi_io;
+EXPORT_SYMBOL_GPL(trap_non_toi_io);
 
 /*
  * For the allocated request tables
@@ -1931,6 +1943,9 @@ void submit_bio(int rw, struct bio *bio)
 {
 	bio->bi_rw |= rw;
 
+	if (unlikely(trap_non_toi_io))
+		BUG_ON(!(bio->bi_flags & BIO_TOI));
+
 	/*
 	 * If it's a regular read/write or a barrier with data attached,
 	 * go through the normal accounting stuff before submission.
@@ -1949,6 +1964,32 @@ void submit_bio(int rw, struct bio *bio)
 			task_io_account_read(bio->bi_iter.bi_size);
 			count_vm_events(PGPGIN, count);
 		}
+#if defined(FEATURE_STORAGE_PID_LOGGER)
+	{
+		struct bio_vec bvec;
+		struct bvec_iter iter;
+
+		bio_for_each_segment(bvec, bio, iter) {
+			struct page_pid_logger *tmp_logger;
+			unsigned long flags;
+
+			if (page_logger && bvec.bv_page) {
+				unsigned long page_index;
+
+				page_index = (unsigned long)(__page_to_pfn(bvec.bv_page)) - PHYS_PFN_OFFSET;
+				tmp_logger = ((struct page_pid_logger *)page_logger) + page_index;
+				spin_lock_irqsave(&g_locker, flags);
+				if (page_index < (system_dram_size >> PAGE_SHIFT)) {
+					if (tmp_logger->pid1 == 0XFFFF && tmp_logger->pid2 != current->pid)
+						tmp_logger->pid1 = current->pid;
+					else if (tmp_logger->pid1 != current->pid)
+						tmp_logger->pid2 = current->pid;
+				}
+				spin_unlock_irqrestore(&g_locker, flags);
+			}
+		}
+	}
+#endif
 
 		if (unlikely(block_dump)) {
 			char b[BDEVNAME_SIZE];
@@ -3324,3 +3365,17 @@ int __init blk_dev_init(void)
 
 	return 0;
 }
+
+#if defined(FEATURE_STORAGE_PID_LOGGER)
+
+static int __init display_early_memory_info(void)
+{
+phys_addr_t start, end;
+start = memblock_start_of_DRAM();
+end = memblock_end_of_DRAM();
+system_dram_size = (unsigned long long)(end - start);
+pr_debug("DRAM: %pa - %pa, size: 0x%llx\n", &start, &end, (unsigned long long)(end - start));
+return 0;
+}
+fs_initcall(display_early_memory_info);
+#endif

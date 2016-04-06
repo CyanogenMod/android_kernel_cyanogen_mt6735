@@ -141,6 +141,7 @@ void pm_restore_gfp_mask(void)
 		saved_gfp_mask = 0;
 	}
 }
+EXPORT_SYMBOL_GPL(pm_restore_gfp_mask);
 
 void pm_restrict_gfp_mask(void)
 {
@@ -149,6 +150,7 @@ void pm_restrict_gfp_mask(void)
 	saved_gfp_mask = gfp_allowed_mask;
 	gfp_allowed_mask &= ~GFP_IOFS;
 }
+EXPORT_SYMBOL_GPL(pm_restrict_gfp_mask);
 
 bool pm_suspended_storage(void)
 {
@@ -204,8 +206,21 @@ static char * const zone_names[MAX_NR_ZONES] = {
 	 "Movable",
 };
 
+/*
+ * Try to keep at least this much lowmem free.  Do not allow normal
+ * allocations below this point, only high priority ones. Automatically
+ * tuned according to the amount of memory in the system.
+ */
 int min_free_kbytes = 1024;
 int user_min_free_kbytes = -1;
+int min_free_order_shift = 1;
+
+/*
+ * Extra memory for the system to try freeing. Used to temporarily
+ * free memory, to make space for new workloads. Anyone can allocate
+ * down to the min watermarks controlled by min_free_kbytes above.
+ */
+int extra_free_kbytes = 0;
 
 static unsigned long __meminitdata nr_kernel_pages;
 static unsigned long __meminitdata nr_all_pages;
@@ -1065,39 +1080,34 @@ static void change_pageblock_range(struct page *pageblock_page,
 }
 
 /*
- * If breaking a large block of pages, move all free pages to the preferred
- * allocation list. If falling back for a reclaimable kernel allocation, be
- * more aggressive about taking ownership of free pages.
+ * When we are falling back to another migratetype during allocation, try to
+ * steal extra free pages from the same pageblocks to satisfy further
+ * allocations, instead of polluting multiple pageblocks.
  *
- * On the other hand, never change migration type of MIGRATE_CMA pageblocks
- * nor move CMA pages to different free lists. We don't want unmovable pages
- * to be allocated from MIGRATE_CMA areas.
+ * If we are stealing a relatively large buddy page, it is likely there will
+ * be more free pages in the pageblock, so try to steal them all. For
+ * reclaimable and unmovable allocations, we steal regardless of page size,
+ * as fragmentation caused by those allocations polluting movable pageblocks
+ * is worse than movable allocations stealing from unmovable and reclaimable
+ * pageblocks.
  *
- * Returns the allocation migratetype if free pages were stolen, or the
- * fallback migratetype if it was decided not to steal.
+ * If we claim more than half of the pageblock, change pageblock's migratetype
+ * as well.
  */
-static int try_to_steal_freepages(struct zone *zone, struct page *page,
+static void try_to_steal_freepages(struct zone *zone, struct page *page,
 				  int start_type, int fallback_type)
 {
 	int current_order = page_order(page);
 
-	/*
-	 * When borrowing from MIGRATE_CMA, we need to release the excess
-	 * buddy pages to CMA itself. We also ensure the freepage_migratetype
-	 * is set to CMA so it is returned to the correct freelist in case
-	 * the page ends up being not actually allocated from the pcp lists.
-	 */
-	if (is_migrate_cma(fallback_type))
-		return fallback_type;
-
 	/* Take ownership for orders >= pageblock_order */
 	if (current_order >= pageblock_order) {
 		change_pageblock_range(page, current_order, start_type);
-		return start_type;
+		return;
 	}
 
 	if (current_order >= pageblock_order / 2 ||
 	    start_type == MIGRATE_RECLAIMABLE ||
+	    start_type == MIGRATE_UNMOVABLE ||
 	    page_group_by_mobility_disabled) {
 		int pages;
 
@@ -1107,11 +1117,7 @@ static int try_to_steal_freepages(struct zone *zone, struct page *page,
 		if (pages >= (1 << (pageblock_order-1)) ||
 				page_group_by_mobility_disabled)
 			set_pageblock_migratetype(page, start_type);
-
-		return start_type;
 	}
-
-	return fallback_type;
 }
 
 /* Remove an element from the buddy allocator from the fallback list */
@@ -1121,14 +1127,15 @@ __rmqueue_fallback(struct zone *zone, unsigned int order, int start_migratetype)
 	struct free_area *area;
 	unsigned int current_order;
 	struct page *page;
-	int migratetype, new_type, i;
 
 	/* Find the largest possible block of pages in the other list */
 	for (current_order = MAX_ORDER-1;
 				current_order >= order && current_order <= MAX_ORDER-1;
 				--current_order) {
+		int i;
 		for (i = 0;; i++) {
-			migratetype = fallbacks[start_migratetype][i];
+			int migratetype = fallbacks[start_migratetype][i];
+			int buddy_type = start_migratetype;
 
 			/* MIGRATE_RESERVE handled later if necessary */
 			if (migratetype == MIGRATE_RESERVE)
@@ -1142,22 +1149,36 @@ __rmqueue_fallback(struct zone *zone, unsigned int order, int start_migratetype)
 					struct page, lru);
 			area->nr_free--;
 
-			new_type = try_to_steal_freepages(zone, page,
-							  start_migratetype,
-							  migratetype);
+			if (!is_migrate_cma(migratetype)) {
+				try_to_steal_freepages(zone, page,
+							start_migratetype,
+							migratetype);
+			} else {
+				/*
+				 * When borrowing from MIGRATE_CMA, we need to
+				 * release the excess buddy pages to CMA
+				 * itself, and we do not try to steal extra
+				 * free pages.
+				 */
+				buddy_type = migratetype;
+			}
 
 			/* Remove the page from the freelists */
 			list_del(&page->lru);
 			rmv_page_order(page);
 
 			expand(zone, page, order, current_order, area,
-			       new_type);
-			/* The freepage_migratetype may differ from pageblock's
+					buddy_type);
+
+			/*
+			 * The freepage_migratetype may differ from pageblock's
 			 * migratetype depending on the decisions in
-			 * try_to_steal_freepages. This is OK as long as it does
-			 * not differ for MIGRATE_CMA type.
+			 * try_to_steal_freepages(). This is OK as long as it
+			 * does not differ for MIGRATE_CMA pageblocks. For CMA
+			 * we need to make sure unallocated pages flushed from
+			 * pcp lists are returned to the correct freelist.
 			 */
-			set_freepage_migratetype(page, new_type);
+			set_freepage_migratetype(page, buddy_type);
 
 			trace_mm_page_alloc_extfrag(page, order, current_order,
 				start_migratetype, migratetype);
@@ -1726,7 +1747,7 @@ static bool __zone_watermark_ok(struct zone *z, unsigned int order,
 		free_pages -= z->free_area[o].nr_free << o;
 
 		/* Require fewer higher order pages to be free */
-		min >>= 1;
+		min >>= min_free_order_shift;
 
 		if (free_pages <= min)
 			return false;
@@ -2773,6 +2794,21 @@ got_pg:
 	return page;
 }
 
+#ifdef CONFIG_MT_ENG_BUILD
+#define __LOG_PAGE_ALLOC_ORDER__
+#include <linux/stacktrace.h>
+#endif
+
+#ifdef __LOG_PAGE_ALLOC_ORDER__
+
+static int page_alloc_dump_order_threshold = 4;
+static int page_alloc_log_order_threshold = 3;
+
+/* Jack remove page_alloc_order_log array for non-used */
+module_param_named(dump_order_threshold, page_alloc_dump_order_threshold, int, S_IRUGO | S_IWUSR);
+module_param_named(log_order_threshold, page_alloc_log_order_threshold, int, S_IRUGO | S_IWUSR);
+#endif /* __LOG_PAGE_ALLOC_ORDER__ */
+
 /*
  * This is the 'heart' of the zoned buddy allocator.
  */
@@ -2788,6 +2824,10 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 	unsigned int cpuset_mems_cookie;
 	int alloc_flags = ALLOC_WMARK_LOW|ALLOC_CPUSET|ALLOC_FAIR;
 	int classzone_idx;
+#ifdef __LOG_PAGE_ALLOC_ORDER__
+	struct stack_trace trace;
+	unsigned long entries[6] = {0};
+#endif
 
 	gfp_mask &= gfp_allowed_mask;
 
@@ -2836,6 +2876,28 @@ retry_cpuset:
 				preferred_zone, classzone_idx, migratetype);
 	}
 
+#ifdef __LOG_PAGE_ALLOC_ORDER__
+
+#ifdef CONFIG_FREEZER /* Added skip debug log in IPOH */
+	if (unlikely(!atomic_read(&system_freezing_cnt))) {
+#endif
+		if (order >= page_alloc_dump_order_threshold) {
+			trace.nr_entries = 0;
+			trace.max_entries = ARRAY_SIZE(entries);
+			trace.entries = entries;
+			trace.skip = 2;
+
+			save_stack_trace(&trace);
+			trace_dump_allocate_large_pages(page, order, gfp_mask, entries);
+		} else if (order >= page_alloc_log_order_threshold) {
+			trace_debug_allocate_large_pages(page, order, gfp_mask);
+		}
+
+#ifdef CONFIG_FREEZER
+	}
+#endif
+
+#endif /* __LOG_PAGE_ALLOC_ORDER__ */
 	trace_mm_page_alloc(page, order, gfp_mask, migratetype);
 
 out:
@@ -3056,6 +3118,27 @@ static unsigned long nr_free_zone_pages(int offset)
 	return sum;
 }
 
+static unsigned long nr_unallocated_zone_pages(int offset)
+{
+	struct zoneref *z;
+	struct zone *zone;
+
+	/* Just pick one node, since fallback list is circular */
+	unsigned long sum = 0;
+
+	struct zonelist *zonelist = node_zonelist(numa_node_id(), GFP_KERNEL);
+
+	for_each_zone_zonelist(zone, z, zonelist, offset) {
+		unsigned long high = high_wmark_pages(zone);
+		unsigned long left = zone_page_state(zone, NR_FREE_PAGES);
+
+		if (left > high)
+			sum += left - high;
+	}
+
+	return sum;
+}
+
 /**
  * nr_free_buffer_pages - count number of pages beyond high watermark
  *
@@ -3067,6 +3150,15 @@ unsigned long nr_free_buffer_pages(void)
 	return nr_free_zone_pages(gfp_zone(GFP_USER));
 }
 EXPORT_SYMBOL_GPL(nr_free_buffer_pages);
+
+/*
+ * Amount of free RAM allocatable within ZONE_DMA and ZONE_NORMAL
+ */
+unsigned long nr_unallocated_buffer_pages(void)
+{
+	return nr_unallocated_zone_pages(gfp_zone(GFP_USER));
+}
+EXPORT_SYMBOL_GPL(nr_unallocated_buffer_pages);
 
 /**
  * nr_free_pagecache_pages - count number of pages beyond high watermark
@@ -5652,6 +5744,7 @@ static void setup_per_zone_lowmem_reserve(void)
 static void __setup_per_zone_wmarks(void)
 {
 	unsigned long pages_min = min_free_kbytes >> (PAGE_SHIFT - 10);
+	unsigned long pages_low = extra_free_kbytes >> (PAGE_SHIFT - 10);
 	unsigned long lowmem_pages = 0;
 	struct zone *zone;
 	unsigned long flags;
@@ -5663,11 +5756,14 @@ static void __setup_per_zone_wmarks(void)
 	}
 
 	for_each_zone(zone) {
-		u64 tmp;
+		u64 min, low;
 
 		spin_lock_irqsave(&zone->lock, flags);
-		tmp = (u64)pages_min * zone->managed_pages;
-		do_div(tmp, lowmem_pages);
+		min = (u64)pages_min * zone->managed_pages;
+		do_div(min, lowmem_pages);
+		low = (u64)pages_low * zone->managed_pages;
+		do_div(low, vm_total_pages);
+
 		if (is_highmem(zone)) {
 			/*
 			 * __GFP_HIGH and PF_MEMALLOC allocations usually don't
@@ -5688,11 +5784,13 @@ static void __setup_per_zone_wmarks(void)
 			 * If it's a lowmem zone, reserve a number of pages
 			 * proportionate to the zone's size.
 			 */
-			zone->watermark[WMARK_MIN] = tmp;
+			zone->watermark[WMARK_MIN] = min;
 		}
 
-		zone->watermark[WMARK_LOW]  = min_wmark_pages(zone) + (tmp >> 2);
-		zone->watermark[WMARK_HIGH] = min_wmark_pages(zone) + (tmp >> 1);
+		zone->watermark[WMARK_LOW]  = min_wmark_pages(zone) +
+					low + (min >> 2);
+		zone->watermark[WMARK_HIGH] = min_wmark_pages(zone) +
+					low + (min >> 1);
 
 		__mod_zone_page_state(zone, NR_ALLOC_BATCH,
 			high_wmark_pages(zone) - low_wmark_pages(zone) -
@@ -5816,7 +5914,7 @@ module_init(init_per_zone_wmark_min)
 /*
  * min_free_kbytes_sysctl_handler - just a wrapper around proc_dointvec() so
  *	that we can call two helper functions whenever min_free_kbytes
- *	changes.
+ *	or extra_free_kbytes changes.
  */
 int min_free_kbytes_sysctl_handler(struct ctl_table *table, int write,
 	void __user *buffer, size_t *length, loff_t *ppos)

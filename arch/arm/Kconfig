@@ -197,7 +197,7 @@ config ZONE_DMA
 	bool
 
 config NEED_DMA_MAP_STATE
-       def_bool y
+	def_bool y
 
 config ARCH_SUPPORTS_UPROBES
 	def_bool y
@@ -786,6 +786,214 @@ config ARCH_OMAP1
 	help
 	  Support for older TI OMAP1 (omap7xx, omap15xx or omap16xx)
 
+config ARCH_MT6735
+	bool "MediaTek MT6735"
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	select ARCH_HAS_CPUFREQ
+	select ARM_HAS_SG_CHAIN
+	select ARM_AMBA
+	select CPU_V7
+	select HAVE_SMP
+	select NEED_MACH_MEMORY_H
+	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
+	select GENERIC_SCHED_CLOCK
+	select VFP_OPT
+	select MTK_SYSTRACKER
+	select MTK_SYS_CIRQ
+	select MTK_EIC
+	select MTK_GIC
+	select COMMON_CLK if !MTK_CLKMGR
+	select CPU_IDLE
+	select PINCTRL
+	select PINCTRL_MT6735
+	select MFD_SYSCON
+	select MTK_BASE_POWER
+	select KERNEL_MODE_NEON
+	select CRYPTO_AES_ARM32_CE
+	select CRYPTO_SHA2_ARM_CE
+	select ARM_ERRATA_836870
+	select MTK_IRQ_NEW_DESIGN
+	select MTK_IRQ_NEW_DESIGN_DEBUG
+	select MTK_POWER_GS
+	select MTK_CPU_STRESS
+	help
+	  This enable support for MediaTek MT6735
+
+config ARCH_MT6735M
+	bool "MediaTek MT6735M"
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	select ARCH_HAS_CPUFREQ
+	select ARM_AMBA
+	select CPU_V7
+	select HAVE_SMP
+	select NEED_MACH_MEMORY_H
+	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
+	select GENERIC_SCHED_CLOCK
+	select VFP_OPT
+	select MTK_SYSTRACKER
+	select MTK_SYS_CIRQ
+	select MTK_EIC
+	select MTK_GIC
+	select ARM_HAS_SG_CHAIN
+	select PINCTRL
+	select PINCTRL_MT6735
+	select MFD_SYSCON
+	select CPU_IDLE
+	select ARM_MT6735_CPUIDLE
+	select MTK_BASE_POWER
+	select KERNEL_MODE_NEON
+	select CRYPTO_AES_ARM32_CE
+	select CRYPTO_SHA2_ARM_CE
+	select ARM_ERRATA_836870
+	select MTK_IRQ_NEW_DESIGN
+	select MTK_IRQ_NEW_DESIGN_DEBUG
+	select MTK_POWER_GS
+	select MTK_CPU_STRESS
+	help
+	  This enables support for MediaTek MT6735M
+	  Support for k35mv1
+	  Support for k35mv1_op01
+	  Support for k35mv1_op02
+
+config ARCH_MT6753
+	bool "MediaTek MT6753"
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	select ARCH_HAS_CPUFREQ
+	select ARM_AMBA
+	select CPU_V7
+	select HAVE_SMP
+	select NEED_MACH_MEMORY_H
+	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
+	select GENERIC_SCHED_CLOCK
+	select VFP_OPT
+	select MTK_SYSTRACKER
+	select MTK_SYS_CIRQ
+	select MTK_EIC
+	select MTK_GIC
+	select ARM_HAS_SG_CHAIN
+	select PINCTRL
+	select PINCTRL_MT6735
+	select MFD_SYSCON
+	select CPU_IDLE
+	select ARM_MT6735_CPUIDLE
+	select KERNEL_MODE_NEON
+	select CRYPTO_AES_ARM32_CE
+	select CRYPTO_SHA2_ARM_CE
+	select MTK_BASE_POWER
+	select ARM_ERRATA_836870
+	select MTK_IRQ_NEW_DESIGN
+	select MTK_IRQ_NEW_DESIGN_DEBUG
+	select MTK_POWER_GS
+	select MTK_CPU_STRESS
+	help
+	  This enable support for MediaTek MT6753
+	  To enable related drivers
+	  Support for k53v1 related projects
+	  Support for k53v1_op02_1g
+
+
+config ARCH_MT6580
+	bool "MediaTek MT6580"
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	select ARCH_HAS_CPUFREQ
+	select ARM_AMBA
+	select CPU_V7
+	select FIQ_GLUE if (!TRUSTONIC_TEE_SUPPORT && !TRUSTY)
+	select HAVE_SMP
+	select NEED_MACH_MEMORY_H
+	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
+	select GENERIC_SCHED_CLOCK
+	select VFP_OPT
+	select ARCH_REQUIRE_GPIOLIB
+	select KERNEL_MODE_NEON
+	select CRYPTO_AES_ARM_BS
+	select CRYPTO_SHA2_ARM_CE
+	select MTK_SYS_CIRQ
+	select ARM_HAS_SG_CHAIN
+	select MTK_BASE_POWER
+	select MTK_EIC
+	select MTK_WATCHPOINT
+	select PINCTRL
+	select PINCTRL_MT6580
+	select MFD_SYSCON
+	select MTK_DEBUG_LATCH
+	select MTK_LASTPC
+	select CPU_IDLE
+	select ARM_MT6735_CPUIDLE
+	select MTK_SYSTRACKER_V2
+	select ARM_ERRATA_814220
+	select MTK_POWER_GS
+	select MTK_CPU_STRESS
+	select MTK_IRQ_NEW_DESIGN
+	select MTK_IRQ_NEW_DESIGN_DEBUG
+	help
+	  This enable support for MediaTek MT6580
+
+config ARCH_MT6755
+	bool "MediaTek MT6755"
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	select ARCH_HAS_CPUFREQ
+	select ARM_AMBA
+	select CPU_V7
+	select HAVE_SMP
+	select NEED_MACH_MEMORY_H
+	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
+	select GENERIC_SCHED_CLOCK
+	select ARCH_REQUIRE_GPIOLIB
+	select MTK_SYS_CIRQ
+	select MTK_EIC
+	select ARMV7_COMPAT
+        select ARMV7_COMPAT_CPUINFO
+	select CPU_IDLE
+	select PINCTRL
+	select KERNEL_MODE_NEON
+	select CRYPTO_AES_ARM32_CE
+	select CRYPTO_SHA2_ARM_CE
+	select MTK_BASE_POWER
+	select ARM_HAS_SG_CHAIN
+	select COMMON_CLK if !MTK_CLKMGR
+	select PINCTRL_MT6735
+	select PINCTRL_MT6755
+	select MTK_POWER_GS
+	select MTK_LM_MODE
+	help
+	  This enable support for MediaTek MT6755
+
+config ARCH_MT8127
+	bool "MediaTek MT8127"
+	select ARCH_MEDIATEK
+	select SPARSE_IRQ
+	select COMMON_CLK if !MTK_CLKMGR
+	select GENERIC_CLOCKEVENTS
+	select ARM_AMBA
+	select CPU_V7
+	select HAVE_SMP
+	select NEED_MACH_MEMORY_H
+	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
+	select ARCH_REQUIRE_GPIOLIB
+	select KERNEL_MODE_NEON
+	select CRYPTO_AES_ARM_BS
+	select ARM_HAS_SG_CHAIN
+	select MTK_BASE_POWER
+	select MFD_SYSCON
+	select CPU_IDLE
+	select ARM_ERRATA_814220
+	help
+	  This enable support for MediaTek MT8127
+
+
+
 endchoice
 
 menu "Multiple platform selection"
@@ -897,6 +1105,8 @@ source "arch/arm/mach-ks8695/Kconfig"
 source "arch/arm/mach-meson/Kconfig"
 
 source "arch/arm/mach-msm/Kconfig"
+
+source "drivers/misc/mediatek/mach/Kconfig"
 
 source "arch/arm/mach-moxart/Kconfig"
 
@@ -1225,9 +1435,9 @@ config ARM_ERRATA_764369
 	  in the diagnostic control register of the SCU.
 
 config ARM_ERRATA_775420
-       bool "ARM errata: A data cache maintenance operation which aborts, might lead to deadlock"
-       depends on CPU_V7
-       help
+	bool "ARM errata: A data cache maintenance operation which aborts, might lead to deadlock"
+	depends on CPU_V7
+	help
 	 This option enables the workaround for the 775420 Cortex-A9 (r2p2,
 	 r2p6,r2p8,r2p10,r3p0) erratum. In case a date cache maintenance
 	 operation aborts with MMU exception, it might cause the processor
@@ -1252,6 +1462,41 @@ config ARM_ERRATA_773022
 	  (up to r0p4) erratum. In certain rare sequences of code, the
 	  loop buffer may deliver incorrect instructions. This
 	  workaround disables the loop buffer to avoid the erratum.
+
+config ARM_ERRATA_814220
+	bool "ARM errata: L2 set/way cache maintenance operation can overtake an L1 set/way cache maintenance operation"
+	depends on CPU_V7
+	help
+	  This option enables the workaround for erratum 814220
+	  Code that intends to clean dirty data from L1 to L2 and then from L2 to L3 using set/way operations might not
+	  behave as expected. The L2 to L3 operation might happen first and result in dirty data remaining in L2 after the
+	  L1 to L2 operation has completed.
+
+	  This workaround put a DSB before changing cache levels to avoid Errata
+
+config ARM_ERRATA_836870
+        bool "Cortex-A53: 836870: Non-allocating reads might prevent a store exclusive from passing"
+        depends on ARM
+        help
+          This option enables the workaround for erratum 836870
+          affecting Cortex-A53 MPCore with two or more processors (r0p0..r0p3).
+          If a Cortex-A53 processor is executing a load and store exclusive instruction in a loop then there are certain conditions
+          that are allowed to cause the store exclusive instruction to repeatedly fail. This includes another processor repeatedly
+          writing to the same cache line. In addition to these allowed conditions, a non-allocating load from another processor migh
+          also cause the store exclusive instruction to repeatedly fail.
+
+          This walkaournd is to ensure system do not use non-allocating load. For 32 bit ATF and 64 bit project,
+          master cpu's DTAH bit is set to 1 at preloader stage and set to 1 again after suspend through
+          dormant driver in ATF. Slave cpus's DTAH bit is set to 1 at dormant driver in ATF stage.
+          For 32 bit non-ATF project, Master cpu's DTAH bit is set to 1 at preloader stage and
+          set to 1 again after suspend through dormant driver in kernel. Slave cpus's DTAH bit is set to 1
+          by hotplug driver in kernel.
+
+          This Kernel option only control the behavior of kernel dormant driver. this config should be enabled with
+          the other parts of patch in ATF and preloader at the same time.
+
+          ATF and Preloader are already enable this patch in default in 32-bit and 64 bit project, so
+          we could enable this kernel config in default.
 
 endmenu
 
@@ -1695,12 +1940,12 @@ config HW_PERF_EVENTS
 	  disabled, perf events will use software events only.
 
 config SYS_SUPPORTS_HUGETLBFS
-       def_bool y
-       depends on ARM_LPAE
+	def_bool y
+	depends on ARM_LPAE
 
 config HAVE_ARCH_TRANSPARENT_HUGEPAGE
-       def_bool y
-       depends on ARM_LPAE
+	def_bool y
+	depends on ARM_LPAE
 
 config ARCH_WANT_GENERAL_HUGETLB
 	def_bool y
@@ -1790,6 +2035,15 @@ config XEN
 	help
 	  Say Y if you want to run Linux in a Virtual Machine on Xen on ARM.
 
+config ARM_FLUSH_CONSOLE_ON_RESTART
+	bool "Force flush the console on restart"
+	help
+	  If the console is locked while the system is rebooted, the messages
+	  in the temporary logbuffer would not have propogated to all the
+	  console drivers. This option forces the console lock to be
+	  released if it failed to be acquired, which will cause all the
+	  pending messages to be flushed.
+
 endmenu
 
 menu "Boot options"
@@ -1819,6 +2073,21 @@ config DEPRECATED_PARAM_STRUCT
 	help
 	  This was deprecated in 2001 and announced to live on for 5 years.
 	  Some old boot loaders still use this way.
+
+config BUILD_ARM_APPENDED_DTB_IMAGE
+	bool "Build a concatenated zImage/dtb by default"
+	depends on OF
+	help
+	  Enabling this option will cause a concatenated zImage and list of
+	  DTBs to be built by default (instead of a standalone zImage.)
+	  The image will built in arch/arm/boot/zImage-dtb
+
+config BUILD_ARM_APPENDED_DTB_IMAGE_NAMES
+	string "Default dtb names"
+	depends on BUILD_ARM_APPENDED_DTB_IMAGE
+	help
+	  Space separated list of names of dtbs to append when
+	  building a concatenated zImage-dtb.
 
 # Compressed boot loader in ROM.  Yes, we really want to ask about
 # TEXT and BSS so we preserve their values in the config files.
@@ -2173,6 +2442,7 @@ source "arch/arm/Kconfig.debug"
 source "security/Kconfig"
 
 source "crypto/Kconfig"
+source "arch/arm/crypto/Kconfig"
 
 source "lib/Kconfig"
 

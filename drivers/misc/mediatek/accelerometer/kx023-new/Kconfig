@@ -1,0 +1,8 @@
+config MTK_KX023_NEW
+	bool "KX023 for MediaTek package"
+	default n
+	help
+	  It support different accelerometer sensor.
+          If this option is set,
+	  it will support
+          KX023 Accelerometer.

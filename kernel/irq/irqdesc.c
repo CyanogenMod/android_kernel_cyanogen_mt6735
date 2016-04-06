@@ -18,6 +18,9 @@
 
 #include "internals.h"
 
+#ifdef CONFIG_MTPROF
+#include "mt_sched_mon.h"
+#endif
 /*
  * lockdep: we want to handle all irq_desc locks as a single lock-class:
  */
@@ -354,6 +357,9 @@ int generic_handle_irq(unsigned int irq)
 EXPORT_SYMBOL_GPL(generic_handle_irq);
 
 #ifdef CONFIG_HANDLE_DOMAIN_IRQ
+#ifdef CONFIG_MTK_SCHED_TRACERS
+#include <trace/events/mtk_events.h>
+#endif
 /**
  * __handle_domain_irq - Invoke the handler for a HW irq belonging to a domain
  * @domain:	The domain where to perform the lookup
@@ -369,8 +375,19 @@ int __handle_domain_irq(struct irq_domain *domain, unsigned int hwirq,
 	struct pt_regs *old_regs = set_irq_regs(regs);
 	unsigned int irq = hwirq;
 	int ret = 0;
+#ifdef CONFIG_MTK_SCHED_TRACERS
+	struct irq_desc *desc;
+#endif
 
 	irq_enter();
+#ifdef CONFIG_MTPROF
+	mt_trace_ISR_start(irq);
+#endif
+#ifdef CONFIG_MTK_SCHED_TRACERS
+	desc = irq_to_desc(irq);
+	trace_irq_entry(irq, (desc && desc->action && desc->action->name) ?
+			desc->action->name : "-");
+#endif
 
 #ifdef CONFIG_IRQ_DOMAIN
 	if (lookup)
@@ -387,7 +404,13 @@ int __handle_domain_irq(struct irq_domain *domain, unsigned int hwirq,
 	} else {
 		generic_handle_irq(irq);
 	}
+#ifdef CONFIG_MTK_SCHED_TRACERS
+	trace_irq_exit(irq);
+#endif
 
+#ifdef CONFIG_MTPROF
+	mt_trace_ISR_end(irq);
+#endif
 	irq_exit();
 	set_irq_regs(old_regs);
 	return ret;
@@ -454,7 +477,7 @@ __irq_alloc_descs(int irq, unsigned int from, unsigned int cnt, int node,
 	start = bitmap_find_next_zero_area(allocated_irqs, IRQ_BITMAP_BITS,
 					   from, cnt, 0);
 	ret = -EEXIST;
-	if (irq >=0 && start != irq)
+	if (irq >= 0 && start != irq)
 		goto err;
 
 	if (start + cnt > nr_irqs) {

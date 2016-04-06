@@ -848,6 +848,16 @@ config CRYPTO_AES_ARM_BS
 	  This implementation does not rely on any lookup tables so it is
 	  believed to be invulnerable to cache timing attacks.
 
+config CRYPTO_AES_ARM32_CE
+	tristate "AES cipher using ARMv8 32bits Crypto Extensions"
+	depends on ARM && KERNEL_MODE_NEON
+	select CRYPTO_ABLK_HELPER
+	help
+	  ARMv8 32bits Crypto Extensions.
+	  AES cipher using ARMv8 32bits Crypto Extensions to
+	  accelerate encryption/decryption.
+	  Such as AES, AES_CBC.
+
 config CRYPTO_ANUBIS
 	tristate "Anubis cipher algorithm"
 	select CRYPTO_ALGAPI
@@ -1411,6 +1421,15 @@ config CRYPTO_LZO
 	select LZO_DECOMPRESS
 	help
 	  This is the LZO algorithm.
+
+config CRYPTO_LZ4K
+        tristate "LZ4K compression algorithm"
+	default n
+        select CRYPTO_ALGAPI
+        help
+          Mediatek's proprietary LZ4K algorithm.
+	  It has better compression ratio than the one in LZO
+	  with less performance degradation.
 
 config CRYPTO_842
 	tristate "842 compression algorithm"

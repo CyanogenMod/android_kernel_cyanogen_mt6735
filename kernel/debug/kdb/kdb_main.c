@@ -42,6 +42,10 @@
 #include <linux/slab.h>
 #include "kdb_private.h"
 
+#ifdef CONFIG_MTK_EXTMEM
+#include <linux/exm_driver.h>
+#endif
+
 #define GREP_LEN 256
 char kdb_grep_string[GREP_LEN];
 int kdb_grepping_flag;
@@ -1136,7 +1140,10 @@ static int kdb_local(kdb_reason_t reason, int error, struct pt_regs *regs,
 	int diag;
 	struct task_struct *kdb_current =
 		kdb_curr_task(raw_smp_processor_id());
-
+#ifdef CONFIG_SCHED_DEBUG
+	get_cpu_var(kdb_in_use) = 1;
+	put_cpu_var(kdb_in_use);
+#endif
 	KDB_DEBUG_STATE("kdb_local 1", reason);
 	kdb_go_count = 0;
 	if (reason == KDB_REASON_DEBUG) {
@@ -1298,6 +1305,10 @@ do_full_getstr:
 			kdb_cmderror(diag);
 	}
 	KDB_DEBUG_STATE("kdb_local 9", diag);
+#ifdef CONFIG_SCHED_DEBUG
+	get_cpu_var(kdb_in_use) = 0;
+	put_cpu_var(kdb_in_use);
+#endif
 	return diag;
 }
 
@@ -2864,6 +2875,11 @@ void __init kdb_init(int lvl)
 
 	if (kdb_init_lvl == KDB_INIT_FULL || lvl <= kdb_init_lvl)
 		return;
+
+#ifdef CONFIG_MTK_EXTMEM
+	init_debug_alloc_pool_aligned();
+#endif
+
 	for (i = kdb_init_lvl; i < lvl; i++) {
 		switch (i) {
 		case KDB_NOT_INITIALIZED:

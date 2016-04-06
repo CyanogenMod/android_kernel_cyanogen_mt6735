@@ -37,6 +37,7 @@
 #include <asm/stacktrace.h>
 #include <asm/exception.h>
 #include <asm/system_misc.h>
+#include <mt-plat/mt_hooks.h>
 
 static const char *handler[]= {
 	"Synchronous Abort",
@@ -236,7 +237,8 @@ void die(const char *str, struct pt_regs *regs, int err)
 
 	bust_spinlocks(0);
 	add_taint(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
-	raw_spin_unlock_irq(&die_lock);
+	/* keep preemption/irq disabled in KE flow to prevent context switch*/
+	/*raw_spin_unlock_irq(&die_lock);*/
 	oops_exit();
 
 	if (in_interrupt())
@@ -259,6 +261,69 @@ void arm64_notify_die(const char *str, struct pt_regs *regs,
 	}
 }
 
+static LIST_HEAD(undef_hook);
+static DEFINE_RAW_SPINLOCK(undef_lock);
+
+void register_undef_hook(struct undef_hook *hook)
+{
+	unsigned long flags;
+
+	raw_spin_lock_irqsave(&undef_lock, flags);
+	list_add(&hook->node, &undef_hook);
+	raw_spin_unlock_irqrestore(&undef_lock, flags);
+}
+
+void unregister_undef_hook(struct undef_hook *hook)
+{
+	unsigned long flags;
+
+	raw_spin_lock_irqsave(&undef_lock, flags);
+	list_del(&hook->node);
+	raw_spin_unlock_irqrestore(&undef_lock, flags);
+}
+
+static int call_undef_hook(struct pt_regs *regs)
+{
+	struct undef_hook *hook;
+	unsigned long flags;
+	u32 instr;
+	int (*fn)(struct pt_regs *regs, unsigned int instr) = arm_undefinstr_retry;
+	void __user *pc = (void __user *)instruction_pointer(regs);
+
+	if (!user_mode(regs))
+		return 1;
+
+	if (compat_thumb_mode(regs)) {
+		/* 16-bit Thumb instruction */
+		if (get_user(instr, (u16 __user *)pc))
+			goto exit;
+		instr = le16_to_cpu(instr);
+		if (aarch32_insn_is_wide(instr)) {
+			u32 instr2;
+
+			if (get_user(instr2, (u16 __user *)(pc + 2)))
+				goto exit;
+			instr2 = le16_to_cpu(instr2);
+			instr = (instr << 16) | instr2;
+		}
+	} else {
+		/* 32-bit ARM instruction */
+		if (get_user(instr, (u32 __user *)pc))
+			goto exit;
+		instr = le32_to_cpu(instr);
+	}
+
+	raw_spin_lock_irqsave(&undef_lock, flags);
+	list_for_each_entry(hook, &undef_hook, node)
+		if ((instr & hook->instr_mask) == hook->instr_val &&
+			(regs->pstate & hook->pstate_mask) == hook->pstate_val)
+			fn = hook->fn;
+
+	raw_spin_unlock_irqrestore(&undef_lock, flags);
+exit:
+	return fn ? fn(regs, instr) : 1;
+}
+
 asmlinkage void __exception do_undefinstr(struct pt_regs *regs)
 {
 	siginfo_t info;
@@ -266,6 +331,9 @@ asmlinkage void __exception do_undefinstr(struct pt_regs *regs)
 
 	/* check for AArch32 breakpoint instructions */
 	if (!aarch32_break_handler(regs))
+		return;
+
+	if (call_undef_hook(regs) == 0)
 		return;
 
 	if (show_unhandled_signals && unhandled_signal(current, SIGILL) &&
@@ -307,6 +375,19 @@ asmlinkage long do_ni_syscall(struct pt_regs *regs)
 	return sys_ni_syscall();
 }
 
+#ifdef CONFIG_MEDIATEK_SOLUTION
+static void (*async_abort_handler)(struct pt_regs *regs, void *);
+static void *async_abort_priv;
+
+int register_async_abort_handler(void (*fn)(struct pt_regs *regs, void *), void *priv)
+{
+	async_abort_handler = fn;
+	async_abort_priv = priv;
+
+	return 0;
+}
+#endif
+
 /*
  * bad_mode handles the impossible case in the exception vector.
  */
@@ -315,6 +396,15 @@ asmlinkage void bad_mode(struct pt_regs *regs, int reason, unsigned int esr)
 	siginfo_t info;
 	void __user *pc = (void __user *)instruction_pointer(regs);
 	console_verbose();
+
+#ifdef CONFIG_MEDIATEK_SOLUTION
+	/*
+	 *	* reason is defined in entry.S, 3 means BAD_ERROR,
+	 *	* which would be triggered by async abort
+	 */
+	if ((reason == 3) && async_abort_handler)
+		async_abort_handler(regs, async_abort_priv);
+#endif
 
 	pr_crit("Bad mode in %s handler detected, code 0x%08x\n",
 		handler[reason], esr);

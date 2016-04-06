@@ -1,0 +1,7 @@
+#
+# Touchscreen driver configuration
+#
+if TOUCHSCREEN_AEON_SYNAPTICS_S2174_8536
+
+
+endif

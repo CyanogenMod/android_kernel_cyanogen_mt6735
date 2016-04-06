@@ -32,9 +32,21 @@
 #include <linux/cpufreq.h>
 #include <linux/cpuidle.h>
 #include <linux/timer.h>
+#include <linux/wakeup_reason.h>
 
 #include "../base.h"
 #include "power.h"
+
+#define HIB_DPM_DEBUG 0
+#define _TAG_HIB_M "HIB/DPM"
+#if (HIB_DPM_DEBUG)
+#undef hib_log
+#define hib_log(fmt, ...)   pr_warn("[%s][%s]" fmt, _TAG_HIB_M, __func__, ##__VA_ARGS__)
+#else
+#define hib_log(fmt, ...)
+#endif
+#undef hib_warn
+#define hib_warn(fmt, ...)  pr_warn("[%s][%s]" fmt, _TAG_HIB_M, __func__, ##__VA_ARGS__)
 
 typedef int (*pm_callback_t)(struct device *);
 
@@ -57,6 +69,12 @@ static LIST_HEAD(dpm_noirq_list);
 struct suspend_stats suspend_stats;
 static DEFINE_MUTEX(dpm_list_mtx);
 static pm_message_t pm_transition;
+
+static void dpm_drv_timeout(unsigned long data);
+struct dpm_drv_wd_data {
+	struct device *dev;
+	struct task_struct *tsk;
+};
 
 static int async_error;
 
@@ -367,7 +385,7 @@ static void dpm_show_time(ktime_t starttime, pm_message_t state, char *info)
 	usecs = usecs64;
 	if (usecs == 0)
 		usecs = 1;
-	pr_info("PM: %s%s%s of devices complete after %ld.%03ld msecs\n",
+	hib_log("PM: %s%s%s of devices complete after %ld.%03ld msecs\n",
 		info ?: "", info ? " " : "", pm_verb(state.event),
 		usecs / USEC_PER_MSEC, usecs % USEC_PER_MSEC);
 }
@@ -828,6 +846,30 @@ static void async_resume(void *data, async_cookie_t cookie)
 }
 
 /**
+ *	dpm_drv_timeout - Driver suspend / resume watchdog handler
+ *	@data: struct device which timed out
+ *
+ * 	Called when a driver has timed out suspending or resuming.
+ * 	There's not much we can do here to recover so
+ * 	BUG() out for a crash-dump
+ *
+ */
+static void dpm_drv_timeout(unsigned long data)
+{
+	struct dpm_drv_wd_data *wd_data = (void *)data;
+	struct device *dev = wd_data->dev;
+	struct task_struct *tsk = wd_data->tsk;
+
+	printk(KERN_EMERG "**** DPM device timeout: %s (%s)\n", dev_name(dev),
+	       (dev->driver ? dev->driver->name : "no driver"));
+
+	printk(KERN_EMERG "dpm suspend stack:\n");
+	show_stack(tsk, NULL);
+
+	BUG();
+}
+
+/**
  * dpm_resume - Execute "resume" callbacks for non-sysdev devices.
  * @state: PM transition of the system being carried out.
  *
@@ -883,6 +925,7 @@ void dpm_resume(pm_message_t state)
 	cpufreq_resume();
 	trace_suspend_resume(TPS("dpm_resume"), state.event, false);
 }
+EXPORT_SYMBOL_GPL(dpm_resume);
 
 /**
  * device_complete - Complete a PM transition for given device.
@@ -963,6 +1006,7 @@ void dpm_complete(pm_message_t state)
 	mutex_unlock(&dpm_list_mtx);
 	trace_suspend_resume(TPS("dpm_complete"), state.event, false);
 }
+EXPORT_SYMBOL_GPL(dpm_complete);
 
 /**
  * dpm_resume_end - Execute "resume" callbacks and complete system transition.
@@ -1336,6 +1380,9 @@ static int __device_suspend(struct device *dev, pm_message_t state, bool async)
 	pm_callback_t callback = NULL;
 	char *info = NULL;
 	int error = 0;
+	struct timer_list timer;
+	struct dpm_drv_wd_data data;
+	char suspend_abort[MAX_SUSPEND_ABORT_LEN];
 	DECLARE_DPM_WATCHDOG_ON_STACK(wd);
 
 	dpm_wait_for_children(dev, async);
@@ -1353,12 +1400,24 @@ static int __device_suspend(struct device *dev, pm_message_t state, bool async)
 		pm_wakeup_event(dev, 0);
 
 	if (pm_wakeup_pending()) {
+		pm_get_active_wakeup_sources(suspend_abort,
+			MAX_SUSPEND_ABORT_LEN);
+		log_suspend_abort_reason(suspend_abort);
 		async_error = -EBUSY;
+		hib_log("async_error(%d) not zero due pm_wakeup_pending return non zero!!\n", async_error);
 		goto Complete;
 	}
 
 	if (dev->power.syscore)
 		goto Complete;
+
+	data.dev = dev;
+	data.tsk = get_current();
+	init_timer_on_stack(&timer);
+	timer.expires = jiffies + HZ * 12;
+	timer.function = dpm_drv_timeout;
+	timer.data = (unsigned long)&data;
+	add_timer(&timer);
 
 	if (dev->power.direct_complete) {
 		if (pm_runtime_status_suspended(dev)) {
@@ -1439,6 +1498,9 @@ static int __device_suspend(struct device *dev, pm_message_t state, bool async)
 	device_unlock(dev);
 	dpm_watchdog_clear(&wd);
 
+	del_timer_sync(&timer);
+	destroy_timer_on_stack(&timer);
+
  Complete:
 	complete_all(&dev->power.completion);
 	if (error)
@@ -1467,6 +1529,7 @@ static int device_suspend(struct device *dev)
 
 	if (pm_async_enabled && dev->power.async_suspend) {
 		get_device(dev);
+		hib_log("using async mode (check value of \"/sys/power/pm_async\"\n");
 		async_schedule(async_suspend, dev);
 		return 0;
 	}
@@ -1503,14 +1566,17 @@ int dpm_suspend(pm_message_t state)
 		if (error) {
 			pm_dev_err(dev, state, "", error);
 			dpm_save_failed_dev(dev_name(dev));
+			hib_log("Device %s failed to %s: error %d\n", dev_name(dev), pm_verb(state.event), error);
 			put_device(dev);
 			break;
 		}
 		if (!list_empty(&dev->power.entry))
 			list_move(&dev->power.entry, &dpm_suspended_list);
 		put_device(dev);
-		if (async_error)
+		if (async_error) {
+			hib_log("async_error(%d)\n", async_error);
 			break;
+		}
 	}
 	mutex_unlock(&dpm_list_mtx);
 	async_synchronize_full();
@@ -1522,8 +1588,10 @@ int dpm_suspend(pm_message_t state)
 	} else
 		dpm_show_time(starttime, state, NULL);
 	trace_suspend_resume(TPS("dpm_suspend"), state.event, false);
+	hib_log("return error(%d)\n", error);
 	return error;
 }
+EXPORT_SYMBOL_GPL(dpm_suspend);
 
 /**
  * device_prepare - Prepare a device for system power transition.
@@ -1643,6 +1711,7 @@ int dpm_prepare(pm_message_t state)
 	trace_suspend_resume(TPS("dpm_prepare"), state.event, false);
 	return error;
 }
+EXPORT_SYMBOL_GPL(dpm_prepare);
 
 /**
  * dpm_suspend_start - Prepare devices for PM transition and suspend them.

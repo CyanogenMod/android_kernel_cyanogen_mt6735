@@ -375,6 +375,7 @@ void __init early_print(const char *str, ...)
 static void __init cpuid_init_hwcaps(void)
 {
 	unsigned int divide_instrs, vmsa;
+	u32 isar5;
 
 	if (cpu_architecture() < CPU_ARCH_ARMv7)
 		return;
@@ -392,6 +393,13 @@ static void __init cpuid_init_hwcaps(void)
 	vmsa = (read_cpuid_ext(CPUID_EXT_MMFR0) & 0xf) >> 0;
 	if (vmsa >= 5)
 		elf_hwcap |= HWCAP_LPAE;
+
+	/* check for supported v8 Crypto instructions */
+	isar5 = read_cpuid_ext(CPUID_EXT_ISAR5);
+
+	vmsa = cpuid_feature_extract_field(isar5, 12);
+	if (vmsa >= 1)
+		elf_hwcap2 |= HWCAP2_SHA2;
 }
 
 static void __init elf_hwcap_fixup(void)
@@ -899,8 +907,11 @@ void __init setup_arch(char **cmdline_p)
 	if (!mdesc)
 		mdesc = setup_machine_tags(__atags_pointer, __machine_arch_type);
 	machine_desc = mdesc;
+#ifdef CONFIG_OF
+	machine_name = of_flat_dt_get_machine_name();
+#else
 	machine_name = mdesc->name;
-
+#endif
 	if (mdesc->reboot_mode != REBOOT_HARD)
 		reboot_mode = mdesc->reboot_mode;
 
@@ -1031,6 +1042,11 @@ static int c_show(struct seq_file *m, void *v)
 {
 	int i, j;
 	u32 cpuid;
+
+	pr_err("Dump cpuinfo\n");
+
+	seq_printf(m, "Processor\t: %s rev %d (%s)\n",
+		   cpu_name, read_cpuid_id() & 15, ELF_PLATFORM);
 
 	for_each_online_cpu(i) {
 		/*

@@ -357,6 +357,7 @@ static void icmp_push_reply(struct icmp_bxm *icmp_param,
 	struct sk_buff *skb;
 
 	sk = icmp_sk(dev_net((*rt)->dst.dev));
+
 	if (ip_append_data(sk, fl4, icmp_glue_bits, icmp_param,
 			   icmp_param->data_len+icmp_param->head_len,
 			   icmp_param->head_len,
@@ -946,6 +947,8 @@ int icmp_rcv(struct sk_buff *skb)
 	struct icmphdr *icmph;
 	struct rtable *rt = skb_rtable(skb);
 	struct net *net = dev_net(rt->dst.dev);
+	/*mtk_net: save ping reply sk*/
+	struct sock *ping_sk = NULL;
 
 	if (!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb)) {
 		struct sec_path *sp = skb_sec_path(skb);
@@ -1014,8 +1017,16 @@ int icmp_rcv(struct sk_buff *skb)
 
 	icmp_pointers[icmph->type].handler(skb);
 
+	if (icmph->type == ICMP_ECHOREPLY && skb->sk != NULL)
+		ping_sk = skb->sk;
+
 drop:
-	kfree_skb(skb);
+	if (ping_sk) {
+		kfree_skb(skb);
+		sock_put(ping_sk);
+	} else {
+		kfree_skb(skb);
+	}
 	return 0;
 csum_error:
 	ICMP_INC_STATS_BH(net, ICMP_MIB_CSUMERRORS);

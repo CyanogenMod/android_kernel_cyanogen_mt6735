@@ -2119,7 +2119,11 @@ static inline void __skb_queue_purge(struct sk_buff_head *list)
 		kfree_skb(skb);
 }
 
+#if 0  /* memory fragement issue */
 #define NETDEV_FRAG_PAGE_MAX_ORDER get_order(32768)
+#else
+#define NETDEV_FRAG_PAGE_MAX_ORDER get_order(8192)
+#endif
 #define NETDEV_FRAG_PAGE_MAX_SIZE  (PAGE_SIZE << NETDEV_FRAG_PAGE_MAX_ORDER)
 #define NETDEV_PAGECNT_MAX_BIAS	   NETDEV_FRAG_PAGE_MAX_SIZE
 

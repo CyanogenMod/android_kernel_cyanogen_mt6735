@@ -343,11 +343,21 @@ struct cfs_rq {
 	 * Under CFS, load is tracked on a per-entity basis and aggregated up.
 	 * This allows for the description of both thread and group usage (in
 	 * the FAIR_GROUP_SCHED case).
+	 * runnable_load_avg is the sum of the load_avg_contrib of the
+	 * sched_entities on the rq.
+	 * blocked_load_avg is similar to runnable_load_avg except that its
+	 * the blocked sched_entities on the rq.
+	 * utilization_load_avg is the sum of the average running time of the
+	 * sched_entities on the rq.
+	 * utilization_blocked_avg is the utilization equivalent of
+	 * blocked_load_avg, i.e. the sum of running contributions of blocked
+	 * sched_entities associated with the rq.
 	 */
 	unsigned long runnable_load_avg, blocked_load_avg;
+	unsigned long utilization_load_avg, utilization_blocked_avg;
 	atomic64_t decay_counter;
 	u64 last_decay;
-	atomic_long_t removed_load;
+	atomic_long_t removed_load, removed_utilization;
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
 	/* Required to track per-cpu representation of a task_group */
@@ -364,6 +374,11 @@ struct cfs_rq {
 	u64 last_h_load_update;
 	struct sched_entity *h_load_next;
 #endif /* CONFIG_FAIR_GROUP_SCHED */
+
+#ifdef CONFIG_SCHED_HMP
+	struct sched_avg avg;
+#endif
+
 #endif /* CONFIG_SMP */
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
@@ -579,6 +594,7 @@ struct rq {
 	struct sched_domain *sd;
 
 	unsigned long cpu_capacity;
+	unsigned long cpu_capacity_orig;
 
 	unsigned char idle_balance;
 	/* For active balancing */
@@ -586,6 +602,9 @@ struct rq {
 	int active_balance;
 	int push_cpu;
 	struct cpu_stop_work active_balance_work;
+#ifdef CONFIG_SCHED_HMP
+	struct task_struct *migrate_task;
+#endif
 	/* cpu of this runqueue: */
 	int cpu;
 	int online;
@@ -752,7 +771,7 @@ struct sched_group_capacity {
 	 * CPU capacity of this group, SCHED_LOAD_SCALE being max capacity
 	 * for a single CPU.
 	 */
-	unsigned int capacity, capacity_orig;
+	unsigned int capacity;
 	unsigned long next_update;
 	int imbalance; /* XXX unrelated to capacity but shared group state */
 	/*
@@ -804,6 +823,18 @@ static inline unsigned int group_first_cpu(struct sched_group *group)
 }
 
 extern int group_balance_cpu(struct sched_group *sg);
+
+#ifdef CONFIG_SCHED_HMP
+/* We need to know which cpus are fast and slow. */
+extern struct cpumask hmp_fast_cpu_mask;
+extern struct cpumask hmp_slow_cpu_mask;
+
+extern void __init arch_get_hmp_domains(struct list_head *hmp_domains_list);
+
+static LIST_HEAD(hmp_domains);
+DECLARE_PER_CPU(struct hmp_domain *, hmp_cpu_domain);
+#define hmp_cpu_domain(cpu)     (per_cpu(hmp_cpu_domain, (cpu)))
+#endif
 
 #else
 
@@ -1174,6 +1205,15 @@ static inline void idle_exit_fair(struct rq *rq) { }
 
 #endif
 
+# ifdef CONFIG_MTK_SCHED_CMP_TGS
+extern int group_leader_is_empty(struct task_struct *p);
+# endif /* CONFIG_MTK_SCHED_CMP_TGS */
+
+# ifdef CONFIG_MTK_SCHED_CMP
+extern void get_cluster_cpus(struct cpumask *cpus, int cluster_id, bool exclusive_offline);
+extern int get_cluster_id(unsigned int cpu);
+# endif /* CONFIG_MTK_SCHED_CMP */
+
 #ifdef CONFIG_CPU_IDLE
 static inline void idle_set_state(struct rq *rq,
 				  struct cpuidle_state *idle_state)
@@ -1198,8 +1238,10 @@ static inline struct cpuidle_state *idle_get_state(struct rq *rq)
 }
 #endif
 
-extern void sysrq_sched_debug_show(void);
 extern void sched_init_granularity(void);
+#ifdef CONFIG_HMP_PACK_SMALL_TASK
+extern void update_packing_domain(int cpu);
+#endif /* CONFIG_HMP_PACK_SMALL_TASK */
 extern void update_max_interval(void);
 
 extern void init_sched_dl_class(void);
@@ -1222,11 +1264,15 @@ unsigned long to_ratio(u64 period, u64 runtime);
 extern void update_idle_cpu_load(struct rq *this_rq);
 
 extern void init_task_runnable_average(struct task_struct *p);
-
+#ifdef CONFIG_MTK_SCHED_RQAVG_KS
+void sched_update_nr_prod(int cpu, unsigned long nr_running, int inc);
+#endif
 static inline void add_nr_running(struct rq *rq, unsigned count)
 {
 	unsigned prev_nr = rq->nr_running;
-
+#ifdef CONFIG_MTK_SCHED_RQAVG_KS
+	sched_update_nr_prod(cpu_of(rq), rq->nr_running, count);
+#endif
 	rq->nr_running = prev_nr + count;
 
 	if (prev_nr < 2 && rq->nr_running >= 2) {
@@ -1253,6 +1299,9 @@ static inline void add_nr_running(struct rq *rq, unsigned count)
 
 static inline void sub_nr_running(struct rq *rq, unsigned count)
 {
+#ifdef CONFIG_MTK_SCHED_RQAVG_KS
+	sched_update_nr_prod(cpu_of(rq), rq->nr_running, -count);
+#endif
 	rq->nr_running -= count;
 }
 
@@ -1308,9 +1357,14 @@ static inline int hrtick_enabled(struct rq *rq)
 
 #ifdef CONFIG_SMP
 extern void sched_avg_update(struct rq *rq);
+extern unsigned long arch_scale_freq_capacity(struct sched_domain *sd, int cpu);
+extern unsigned long arch_scale_cpu_capacity(struct sched_domain *sd, int cpu);
+extern void arch_scale_set_curr_freq(int cpu, unsigned long freq);
+extern void arch_scale_set_max_freq(int cpu, unsigned long freq);
+
 static inline void sched_rt_avg_update(struct rq *rq, u64 rt_delta)
 {
-	rq->rt_avg += rt_delta;
+	rq->rt_avg += rt_delta * arch_scale_freq_capacity(NULL, cpu_of(rq));
 	sched_avg_update(rq);
 }
 #else
@@ -1569,3 +1623,19 @@ static inline u64 irq_time_read(int cpu)
 }
 #endif /* CONFIG_64BIT */
 #endif /* CONFIG_IRQ_TIME_ACCOUNTING */
+
+/* sched:  add for print ke log */
+#ifdef CONFIG_SMP
+static inline int rq_cpu(const struct rq *rq) { return rq->cpu; }
+#else
+static inline int rq_cpu(const struct rq *rq) { return 0; }
+#endif
+
+#ifdef TEST_SCHED_DEBUG_ENHANCEMENT
+extern void lock_timekeeper(void);
+#endif
+
+#ifdef CONFIG_SCHED_DEBUG
+extern void print_rt_rq(struct seq_file *m, int cpu, struct rt_rq *rt_rq);
+#endif /* CONFIG_SCHED_DEBUG */
+

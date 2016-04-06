@@ -69,6 +69,7 @@ struct secondary_data {
 extern struct secondary_data secondary_data;
 extern volatile int pen_release;
 extern void secondary_startup(void);
+extern void secondary_startup_arm(void);
 
 extern int __cpu_disable(void);
 
@@ -80,6 +81,8 @@ extern void arch_send_call_function_ipi_mask(const struct cpumask *mask);
 extern void arch_send_wakeup_ipi_mask(const struct cpumask *mask);
 
 extern int register_ipi_completion(struct completion *completion, int cpu);
+
+extern void smp_send_all_cpu_backtrace(void);
 
 struct smp_operations {
 #ifdef CONFIG_SMP

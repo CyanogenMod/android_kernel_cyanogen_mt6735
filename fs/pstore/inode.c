@@ -206,6 +206,7 @@ static const struct inode_operations pstore_dir_inode_operations = {
 static struct inode *pstore_get_inode(struct super_block *sb)
 {
 	struct inode *inode = new_inode(sb);
+
 	if (inode) {
 		inode->i_ino = get_next_ino();
 		inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
@@ -306,7 +307,7 @@ int pstore_mkfile(enum pstore_type_id type, char *psname, u64 id, int count,
 		goto fail;
 	inode->i_mode = S_IFREG | 0444;
 	inode->i_fop = &pstore_file_operations;
-	private = kmalloc(sizeof *private + size, GFP_KERNEL);
+	private = kmalloc(sizeof(*private) + size, GFP_KERNEL);
 	if (!private)
 		goto fail_alloc;
 	private->type = type;
@@ -316,32 +317,41 @@ int pstore_mkfile(enum pstore_type_id type, char *psname, u64 id, int count,
 
 	switch (type) {
 	case PSTORE_TYPE_DMESG:
-		sprintf(name, "dmesg-%s-%lld%s", psname, id,
-						compressed ? ".enc.z" : "");
+		scnprintf(name, sizeof(name), "dmesg-%s-%lld%s",
+			  psname, id, compressed ? ".enc.z" : "");
 		break;
 	case PSTORE_TYPE_CONSOLE:
-		sprintf(name, "console-%s-%lld", psname, id);
+		if (id)
+			scnprintf(name, sizeof(name), "console-%s-%lld", psname, id);
+		else
+			scnprintf(name, sizeof(name), "console-%s", psname);
 		break;
 	case PSTORE_TYPE_FTRACE:
-		sprintf(name, "ftrace-%s-%lld", psname, id);
+		scnprintf(name, sizeof(name), "ftrace-%s", psname);
 		break;
 	case PSTORE_TYPE_MCE:
-		sprintf(name, "mce-%s-%lld", psname, id);
+		scnprintf(name, sizeof(name), "mce-%s-%lld", psname, id);
 		break;
 	case PSTORE_TYPE_PPC_RTAS:
-		sprintf(name, "rtas-%s-%lld", psname, id);
+		scnprintf(name, sizeof(name), "rtas-%s-%lld", psname, id);
 		break;
 	case PSTORE_TYPE_PPC_OF:
-		sprintf(name, "powerpc-ofw-%s-%lld", psname, id);
+		scnprintf(name, sizeof(name), "powerpc-ofw-%s-%lld",
+			  psname, id);
 		break;
 	case PSTORE_TYPE_PPC_COMMON:
-		sprintf(name, "powerpc-common-%s-%lld", psname, id);
+		scnprintf(name, sizeof(name), "powerpc-common-%s-%lld",
+			  psname, id);
+		break;
+	case PSTORE_TYPE_PMSG:
+		scnprintf(name, sizeof(name), "pmsg-%s-%lld", psname, id);
 		break;
 	case PSTORE_TYPE_UNKNOWN:
-		sprintf(name, "unknown-%s-%lld", psname, id);
+		scnprintf(name, sizeof(name), "unknown-%s-%lld", psname, id);
 		break;
 	default:
-		sprintf(name, "type%d-%s-%lld", type, psname, id);
+		scnprintf(name, sizeof(name), "type%d-%s-%lld",
+			  type, psname, id);
 		break;
 	}
 
