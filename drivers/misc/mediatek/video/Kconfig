@@ -16,6 +16,12 @@ config MTK_VIDEOX
 	help
 	  CONFIG_MTK_VIDEOX
 
+config MTK_VIDEOX_CYNGN_LIVEDISPLAY
+	bool CONFIG_MTK_VIDEOX_CYNGN_LIVEDISPLAY
+	default n
+	help
+		Enable the RGB interface for color calibration.
+
 config MTK_LCM_PHYSICAL_ROTATION
 	string "MTK_LCM_PHYSICAL_ROTATION"
 	help

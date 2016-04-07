@@ -143,10 +143,18 @@ static int disp_gamma_set_lut(const DISP_GAMMA_LUT_T __user *user_gamma_lut, voi
 		return -EFAULT;
 	}
 
+#ifdef CONFIG_MTK_VIDEOX_CYNGN_LIVEDISPLAY
+	if (virt_addr_valid(user_gamma_lut)) {
+		memcpy(gamma_lut, user_gamma_lut, sizeof(DISP_GAMMA_LUT_T));
+	} else
+#endif
 	if (copy_from_user(gamma_lut, user_gamma_lut, sizeof(DISP_GAMMA_LUT_T)) != 0) {
+		GAMMA_ERR("disp_gamma_set_lut: cannot copy from user mem");
 		ret = -EFAULT;
 		kfree(gamma_lut);
-	} else {
+	}
+
+	if (!ret) {
 		id = gamma_lut->hw_id;
 		if (0 <= id && id < DISP_GAMMA_TOTAL) {
 			mutex_lock(&g_gamma_global_lock);
