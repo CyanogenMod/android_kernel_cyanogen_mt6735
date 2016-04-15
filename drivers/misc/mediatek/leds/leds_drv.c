@@ -656,6 +656,10 @@ static int mt65xx_leds_probe(struct platform_device *pdev)
 		g_leds_data[i]->cust.mode = cust_led_list[i].mode;
 		g_leds_data[i]->cust.data = cust_led_list[i].data;
 		g_leds_data[i]->cust.name = cust_led_list[i].name;
+		if (!strncmp("lcd-backlight", g_leds_data[i]->cust.name, sizeof("lcd-backlight"))) {
+			g_leds_data[i]->level = 255;
+			g_leds_data[i]->cdev.brightness = 255;
+		}
 
 		g_leds_data[i]->cdev.name = cust_led_list[i].name;
 		g_leds_data[i]->cust.config_data = cust_led_list[i].config_data;	/* bei add */

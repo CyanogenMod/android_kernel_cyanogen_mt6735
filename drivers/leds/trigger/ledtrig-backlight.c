@@ -40,11 +40,14 @@ static int fb_notifier_callback(struct notifier_block *p,
 	int new_status;
 
 	/* If we aren't interested in this event, skip it immediately ... */
-	if (event != FB_EVENT_BLANK)
+	if (event != FB_EVENT_BLANK && event != FB_EARLY_EVENT_BLANK)
 		return 0;
 
 	blank = fb_event->data;
 	new_status = *blank ? BLANK : UNBLANK;
+
+	if (event == FB_EVENT_BLANK && new_status != UNBLANK) return 0;
+	if (event == FB_EARLY_EVENT_BLANK && new_status != BLANK) return 0;
 
 	if (new_status == n->old_status)
 		return 0;
