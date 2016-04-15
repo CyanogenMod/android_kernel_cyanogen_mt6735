@@ -289,3 +289,7 @@ config MTK_GPS_REGISTER_SETTING
 	depends on MTK_COMBO_GPS
 	help
 	   GPS register settings.
+
+config MTK_COMBO_AOSP_TETHERING_SUPPORT
+	bool "Multiplex wlan0 for both AP and STA"
+	default n
