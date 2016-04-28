@@ -27,9 +27,10 @@
 #include "synaptics_dsx.h"
 #include "synaptics_dsx_i2c.h"
 
+extern int tpd_firmware_version[2];
 #define FW_IMAGE_NAME "synaptics/startup_fw_update.img"
-#define FW_IMAGE_NAME_TXD "synaptics/startup_fw_update_txd.img"
-//#define DO_STARTUP_FW_UPDATE
+//#define FW_IMAGE_NAME_TXD "synaptics/startup_fw_update.img"
+#define DO_STARTUP_FW_UPDATE
 #define STARTUP_FW_UPDATE_DELAY_MS 1000 /* ms */
 #define FORCE_UPDATE false
 #define DO_LOCKDOWN false
@@ -81,9 +82,9 @@
 #define CMD_ENABLE_FLASH_PROG 0xf
 
 #define SLEEP_MODE_NORMAL (0x00)
-//#define SLEEP_MODE_SENSOR_SLEEP (0x01)
-//#define SLEEP_MODE_RESERVED0 (0x02)
-//#define SLEEP_MODE_RESERVED1 (0x03)
+#define SLEEP_MODE_SENSOR_SLEEP (0x01)
+#define SLEEP_MODE_RESERVED0 (0x02)
+#define SLEEP_MODE_RESERVED1 (0x03)
 
 #define ENABLE_WAIT_MS (1 * 1000)
 #define WRITE_WAIT_MS (3 * 1000)
@@ -349,6 +350,30 @@ static unsigned int extract_uint_be(const unsigned char *ptr)
 			(unsigned int)ptr[2] * 0x100 +
 			(unsigned int)ptr[1] * 0x10000 +
 			(unsigned int)ptr[0] * 0x1000000;
+}
+
+//sanford.lin
+static ssize_t save_config_id(void)
+{
+	int retval;
+	unsigned char config_id[4];
+
+	/* Get device config ID */
+	retval = fwu->fn_ptr->read(fwu->rmi4_data,
+				fwu->f34_fd.ctrl_base_addr,
+				config_id,
+				sizeof(config_id));
+	if (retval < 0) {
+		dev_err(&fwu->rmi4_data->i2c_client->dev,
+				"%s: Failed to read device config ID\n",
+				__func__);
+		return retval;
+	}
+
+	tpd_firmware_version[0] = (int)(config_id[0] << 8 | config_id[1]);
+	tpd_firmware_version[1] = (int)(config_id[2] << 8 | config_id[3]);
+
+	return 0;
 }
 
 static void parse_header(struct image_header_data *header,
@@ -1306,15 +1331,15 @@ static int fwu_start_reflash(void)
 
 	fwu->rmi4_data->stay_awake = true;
 
-      printk("%s: Start of reflash process\n", __func__);
+        printk("%s: Start of reflash process\n", __func__);
 
 	if (fwu->ext_data_source) {
 		fw_image = fwu->ext_data_source;
 	} else {
-		if(strstr(saved_command_line, "nt35521s_hd720_dsi_vdo_txd")) //txd 
-			strncpy(fwu->image_name, FW_IMAGE_NAME_TXD, MAX_IMAGE_NAME_LEN);
-		else
-			strncpy(fwu->image_name, FW_IMAGE_NAME, MAX_IMAGE_NAME_LEN);
+		//if(strstr(saved_command_line, "nt35521s_hd720_dsi_vdo_txd")) //txd 
+		//	strncpy(fwu->image_name, FW_IMAGE_NAME_TXD, MAX_IMAGE_NAME_LEN);
+		//else
+		strncpy(fwu->image_name, FW_IMAGE_NAME, MAX_IMAGE_NAME_LEN);
 		dev_dbg(&fwu->rmi4_data->i2c_client->dev,
 				"%s: Requesting firmware image %s\n",
 				__func__, fwu->image_name);
@@ -1337,7 +1362,7 @@ static int fwu_start_reflash(void)
 	}
 
 	parse_header(&header, fw_image);
-
+                
 	if (fwu->bl_version != header.bootloader_version) {
 		dev_err(&fwu->rmi4_data->i2c_client->dev,
 				"%s: Bootloader version mismatch\n",
@@ -1409,7 +1434,7 @@ exit:
 		release_firmware(fw_entry);
 
 	printk("%s: End of reflash process\n", __func__);
-
+	save_config_id();//sanford.lin
 	fwu->rmi4_data->stay_awake = false;
 
 	return retval;
@@ -1433,14 +1458,14 @@ int synaptics_fw_updater(unsigned char *fw_data)
 	return retval;
 }
 EXPORT_SYMBOL(synaptics_fw_updater);
-/*
+#ifdef DO_STARTUP_FW_UPDATE
 static void fwu_startup_fw_update_work(struct work_struct *work)
 {
 	synaptics_fw_updater(NULL);
 
 	return;
 }
-*/
+#endif
 static ssize_t fwu_sysfs_show_image(struct file *data_file,
 		struct kobject *kobj, struct bin_attribute *attributes,
 		char *buf, loff_t pos, size_t count)
@@ -1797,7 +1822,7 @@ static int synaptics_rmi4_fwu_init(struct synaptics_rmi4_data *rmi4_data)
 			&fwu->fwu_work,
 			msecs_to_jiffies(STARTUP_FW_UPDATE_DELAY_MS));
 #endif
-
+	save_config_id();//sanford.lin
 	return 0;
 
 exit_remove_attrs:

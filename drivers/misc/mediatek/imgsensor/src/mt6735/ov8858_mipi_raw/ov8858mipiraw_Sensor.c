@@ -1664,7 +1664,7 @@ int read_otp(struct otp_struct *otp_ptr)
 
 int apply_otp(struct otp_struct *otp_ptr)
 {
-	int RG_Ratio_Typical = 0x13B, BG_Ratio_Typical = 0x14B;
+	int RG_Ratio_Typical = 0x127, BG_Ratio_Typical = 0x13e;
 	int rg, bg, R_gain, G_gain, B_gain, Base_gain, temp, i;
 	// apply OTP WB Calibration
 	if ((*otp_ptr).flag & 0x40) {

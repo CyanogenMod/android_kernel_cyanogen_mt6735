@@ -1641,8 +1641,8 @@ struct otp_struct {
 	int VCM_end;
 	int VCM_dir;
 };
-static int RG_Ratio_Typical = 0x144;//0x280;   // 315
-static int BG_Ratio_Typical = 0x144;	//291
+static int RG_Ratio_Typical = 0x119;//0x280;   // 315
+static int BG_Ratio_Typical = 0x11f;	//291
 
 struct otp_struct ov8865_otp_data;
 

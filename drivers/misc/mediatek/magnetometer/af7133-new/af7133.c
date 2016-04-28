@@ -19,6 +19,7 @@
 #include <mt-plat/battery_common.h>
 #include <mt-plat/mt_boot_common.h>
 #include <hwmsensor.h>
+#include <mt-plat/mt_gpio.h>
 
 /* Add for auto detect feature */
 static int  af7133_local_init(void);
@@ -269,7 +270,7 @@ int af7133_i2c_master_operate(struct i2c_client *client,  char *buf, int count, 
 
 static void af7133_power(struct mag_hw *hw, unsigned int on)
 {
-
+    mt_set_gpio_out(61, on);
 }
 /*----------------------------------------------------------------------------*/
 

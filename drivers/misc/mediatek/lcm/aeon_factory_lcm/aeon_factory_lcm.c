@@ -423,11 +423,11 @@ static unsigned int lcm_compare_id(void)
 
 	//mt_set_gpio_dir(GPIO_AEON_FACTORY_PIN, GPIO_DIR_OUT);
 
-#ifdef BUILD_LK
-	printf("%s, LK debug: aeon_factory id = %d\n", __func__, factory_pin_id);
-#else
-	printk("%s, kernel debug: aeon_factory id = %d\n", __func__, factory_pin_id);
-#endif
+//#ifdef BUILD_LK
+	//printf("%s, LK debug: aeon_factory id = %d\n", __func__, factory_pin_id);
+//#else
+	//printk("%s, kernel debug: aeon_factory id = %d\n", __func__, factory_pin_id);
+//#endif
 	return 0; //return (factory_pin_id == 0) ? 1: 0;
 
 #else

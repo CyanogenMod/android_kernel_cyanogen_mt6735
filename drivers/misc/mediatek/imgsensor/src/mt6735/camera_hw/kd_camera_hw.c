@@ -96,7 +96,24 @@ PowerUp PowerOnList={
 				{SensorMCLK, Mclk1, 0},
 				{RST, Vol_Low, 0},
 				{PDN, Vol_Low, 0},
-				{DVDD, Vol_1200, 10},
+				{DVDD, Vol_1000, 10},
+				{AVDD, Vol_2800, 10},
+				{DOVDD, Vol_1800, 10},
+				{AFVDD, Vol_2800, 10},
+				{RST, Vol_High, 10},
+				{PDN, Vol_High, 10},
+		   },
+	    },
+    #endif
+
+    #if defined(S5K3M2_MIPI_RAW_YD)
+	    {SENSOR_DRVNAME_S5K3M2_MIPI_RAW_YD,
+		   {
+				{SensorId, MAIN_SENSOR, 0},
+				{SensorMCLK, Mclk1, 0},
+				{RST, Vol_Low, 0},
+				{PDN, Vol_Low, 0},
+				{DVDD, Vol_1000, 10},
 				{AVDD, Vol_2800, 10},
 				{DOVDD, Vol_1800, 10},
 				{AFVDD, Vol_2800, 10},

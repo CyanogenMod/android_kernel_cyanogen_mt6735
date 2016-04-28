@@ -231,6 +231,7 @@ struct touch_info {
 	int y[TPD_SUPPORT_POINTS];
 	int x[TPD_SUPPORT_POINTS];
 	int p[TPD_SUPPORT_POINTS];
+	int id[TPD_SUPPORT_POINTS];
 	int count;
 };
 
@@ -327,7 +328,7 @@ static struct device_attribute *ft5x0x_attrs[] = {
 #endif
 };
 
-static void tpd_down(int x, int y, int p)
+static void tpd_down(int x, int y, int p, int id)
 {
 #if defined(CONFIG_TPD_ROTATE_90)
 	tpd_rotate_90(&x, &y);
@@ -342,8 +343,9 @@ static void tpd_down(int x, int y, int p)
 #else
 	{
 #endif
-		TPD_DEBUG("%s x:%d y:%d p:%d\n", __func__, x, y, p);
+		TPD_DEBUG("%s x:%d y:%d p:%d id:%d\n", __func__, x, y, p,id);
 		input_report_key(tpd->dev, BTN_TOUCH, 1);
+		input_report_abs(tpd->dev, ABS_MT_TRACKING_ID, id);
 		input_report_abs(tpd->dev, ABS_MT_TOUCH_MAJOR, 1);
 		input_report_abs(tpd->dev, ABS_MT_POSITION_X, x);
 		input_report_abs(tpd->dev, ABS_MT_POSITION_Y, y);
@@ -440,6 +442,7 @@ static int tpd_touchinfo(struct touch_info *cinfo, struct touch_info *pinfo)
 
 	for (i = 0; i < cinfo->count; i++) {
 		cinfo->p[i] = (data[3 + 6 * i] >> 6) & 0x0003; /* event flag */
+		cinfo->id[i] = data[3+6*i+2]>>4; // touch id
 
 		/*get the X coordinate, 2 bytes*/
 		high_byte = data[3 + 6 * i];
@@ -538,7 +541,7 @@ static int touch_event_handler(void *unused)
 			}
 			if (cinfo.count > 0) {
 				for (i = 0; i < cinfo.count; i++)
-					tpd_down(cinfo.x[i], cinfo.y[i], i + 1);
+					tpd_down(cinfo.x[i], cinfo.y[i], i + 1, cinfo.id[i]);
 			} else {
 #ifdef TPD_SOLVE_CHARGING_ISSUE
 				tpd_up(1, 48);

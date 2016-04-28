@@ -60,8 +60,8 @@
   #define   LCM_DSI_CMD_MODE                                                      0
   
   #define LCM_ID_HX8394f                                      0x94
-  #define  GPIO_LCD_MAKER_ID    2
-  #define  GPIO_LCM_ID2_PIN    64
+#define GPIO_LCD_MAKER_ID 2
+#define GPIO_LCM_ID2_PIN 64
   // ---------------------------------------------------------------------------
   //  Local Variables
   // ---------------------------------------------------------------------------
@@ -305,157 +305,6 @@ dsi_set_cmdq(data_array, 1, 1);
 MDELAY(20);
 }
 
-void init_lcm_registers_hlt(void)
-{
-unsigned int data_array[16];
-
-data_array[0] = 0x00043902;
-data_array[1] = 0x9483FFB9;
-dsi_set_cmdq(data_array, 2, 1);
-MDELAY(1);
-
-data_array[0] = 0x000B3902;
-data_array[1] = 0x6C0C48B1;
-data_array[2] = 0x71543309;
-data_array[3] = 0x00452E71;
-dsi_set_cmdq(data_array, 4, 1);
-MDELAY(1);
-
-data_array[0] = 0x00073902;
-data_array[1] = 0x680363BA;
-data_array[2] = 0x00C0B26B;
-dsi_set_cmdq(data_array, 3, 1);
-MDELAY(1);
-
-data_array[0] = 0x00073902;
-data_array[1] = 0x648000B2;
-data_array[2] = 0x002F0A0E;
-dsi_set_cmdq(data_array, 3, 1);
-MDELAY(1);
-
-data_array[0] = 0x00163902;
-data_array[1] = 0x207C20B4;
-data_array[2] = 0x017C207C;
-data_array[3] = 0x0075860C;
-data_array[4] = 0x207C203F;
-data_array[5] = 0x017C207C;
-data_array[6] = 0x0000860C;
-dsi_set_cmdq(data_array, 7, 1);
-MDELAY(1);
-
-data_array[0] = 0x00223902;
-data_array[1] = 0x000000D3;
-data_array[2] = 0x10000000;
-data_array[3] = 0x03103210;
-data_array[4] = 0x13320300;
-data_array[5] = 0x320000C0;
-data_array[6] = 0x00000810;
-data_array[7] = 0x05050437;
-data_array[8] = 0x47050537;
-data_array[9] = 0x0000400E;
-dsi_set_cmdq(data_array, 10, 1);
-MDELAY(1);
-
-data_array[0] = 0x002D3902;
-data_array[1] = 0x181818D5;
-data_array[2] = 0x02010018;
-data_array[3] = 0x06050403;
-data_array[4] = 0x18181807;
-data_array[5] = 0x18181818;
-data_array[6] = 0x18181818;
-data_array[7] = 0x18181818;
-data_array[8] = 0x18181818;
-data_array[9] = 0x18181818;
-data_array[10] = 0x19191918;
-data_array[11] = 0x22212019;
-data_array[12] = 0x00000023;
-dsi_set_cmdq(data_array, 13, 1);
-MDELAY(1);
-
-data_array[0] = 0x002D3902;
-data_array[1] = 0x191818D6;
-data_array[2] = 0x05060719;
-data_array[3] = 0x01020304;
-data_array[4] = 0x18181800;
-data_array[5] = 0x18181818;
-data_array[6] = 0x18181818;
-data_array[7] = 0x18181818;
-data_array[8] = 0x18181818;
-data_array[9] = 0x18181818;
-data_array[10] = 0x18191918;
-data_array[11] = 0x21222318;
-data_array[12] = 0x00000020;
-dsi_set_cmdq(data_array, 13, 1);
-MDELAY(1);
-
-data_array[0] = 0x003B3902;
-data_array[1] = 0x0B0500E0;
-data_array[2] = 0x19161211;
-data_array[3] = 0x50403017;
-data_array[4] = 0x6F69584F;
-data_array[5] = 0x7E827F71;
-data_array[6] = 0x4F4F9E8D;
-data_array[7] = 0x675D5853;
-data_array[8] = 0x05007F74;
-data_array[9] = 0x1612110B;
-data_array[10] = 0x40301719;
-data_array[11] = 0x69584F50;
-data_array[12] = 0x827F716F;
-data_array[13] = 0x4F9E8D7E;
-data_array[14] = 0x5D58534F;
-data_array[15] = 0x007F7467;
-dsi_set_cmdq(data_array, 16, 1);
-MDELAY(1);
-
-data_array[0] = 0x00023902;
-data_array[1] = 0x00000BCC;
-dsi_set_cmdq(data_array, 2, 1);
-MDELAY(1);
-
-data_array[0] = 0x00033902;
-data_array[1] = 0x00731FC0;
-dsi_set_cmdq(data_array, 2, 1);
-MDELAY(1);
-
-data_array[0] = 0x00033902;
-data_array[1] = 0x005050B6;
-dsi_set_cmdq(data_array, 2, 1);
-MDELAY(1);
-
-data_array[0] = 0x00023902;
-data_array[1] = 0x000002D4;
-dsi_set_cmdq(data_array, 2, 1);
-MDELAY(1);
-
-data_array[0] = 0x00023902;
-data_array[1] = 0x000001BD;
-dsi_set_cmdq(data_array, 2, 1);
-MDELAY(1);
-
-data_array[0] = 0x00023902;
-data_array[1] = 0x000060B1;
-dsi_set_cmdq(data_array, 2, 1);
-MDELAY(1);
-
-data_array[0] = 0x00023902;
-data_array[1] = 0x000000BD;
-dsi_set_cmdq(data_array, 2, 1);
-MDELAY(1);
-
-data_array[0] = 0x00083902;
-data_array[1] = 0x508140BF;
-data_array[2] = 0x01FC1A00;
-dsi_set_cmdq(data_array, 3, 1);
-MDELAY(1);
-
-data_array[0] = 0x00110500;
-dsi_set_cmdq(data_array, 1, 1);
-MDELAY(150);
-
-data_array[0] = 0x00290500;
-dsi_set_cmdq(data_array, 1, 1);
-MDELAY(20);
-}
  /* 
   static struct LCM_setting_table lcm_sleep_out_setting[] = {
       // Sleep Out
@@ -583,7 +432,6 @@ MDELAY(20);
   
   static void lcm_init(void)
   {
-          unsigned int lcd_id1=-1, lcd_id2 = -1;
           MDELAY(10);
           SET_RESET_PIN(1);
           MDELAY(5);
@@ -592,34 +440,9 @@ MDELAY(20);
   
           SET_RESET_PIN(1);
           MDELAY(180);
+              
+          init_lcm_registers_lide();
           
-          mt_set_gpio_mode(GPIO_LCD_MAKER_ID, GPIO_MODE_00);
-          mt_set_gpio_dir(GPIO_LCD_MAKER_ID, GPIO_DIR_IN);
-          mt_set_gpio_pull_enable(GPIO_LCD_MAKER_ID, 1);
-          mt_set_gpio_pull_select(GPIO_LCD_MAKER_ID, GPIO_PULL_UP);
-          lcd_id1 = mt_get_gpio_in(GPIO_LCD_MAKER_ID);
-
-          mt_set_gpio_mode(GPIO_LCM_ID2_PIN, GPIO_MODE_00);
-          mt_set_gpio_dir(GPIO_LCM_ID2_PIN, GPIO_DIR_IN);
-          mt_set_gpio_pull_enable(GPIO_LCM_ID2_PIN, 1);
-          mt_set_gpio_pull_select(GPIO_LCM_ID2_PIN, GPIO_PULL_UP);
-          lcd_id2 =  mt_get_gpio_in(GPIO_LCM_ID2_PIN);
-
-          if((lcd_id1 == 0) && (lcd_id2 == 0)){
-              #ifndef BUILD_LK
-              printk("load aeon_hx8394f_hd720_dsi_vdo_lide_8536 lcd_id1 = %d,lcd_id2 = %d \n", lcd_id1, lcd_id2);
-              #else
-              printf("load aeon_hx8394f_hd720_dsi_vdo_lide_8536 lcd_id1 = %d,lcd_id2 = %d \n", lcd_id1, lcd_id2);
-              #endif
-              init_lcm_registers_lide();
-          }else{
-              #ifndef BUILD_LK
-              printk("load aeon_hx8394f_hd720_dsi_vdo_hlt_8536 lcd_id1 = %d,lcd_id2 = %d \n", lcd_id1, lcd_id2);
-              #else
-              printf("load aeon_hx8394f_hd720_dsi_vdo_hlt_8536 lcd_id1 = %d,lcd_id2 = %d \n", lcd_id1, lcd_id2);
-              #endif
-              init_lcm_registers_hlt();
-          }
   }
   
   static void lcm_suspend(void)
@@ -688,6 +511,7 @@ MDELAY(20);
 	unsigned int id=0;
 	unsigned char buffer[3];
 	unsigned int array[16];  
+        unsigned int lcd_id1=-1, lcd_id2 = -1;
 
 	SET_RESET_PIN(1);
 	MDELAY(10); 	
@@ -707,14 +531,27 @@ MDELAY(20);
 	
 	read_reg_v2(0x04, buffer, 3);
 	id = buffer[0]; //we only need ID
+        
+        mt_set_gpio_mode(GPIO_LCD_MAKER_ID, GPIO_MODE_00);
+        mt_set_gpio_dir(GPIO_LCD_MAKER_ID, GPIO_DIR_IN);
+        mt_set_gpio_pull_enable(GPIO_LCD_MAKER_ID, 1);
+        mt_set_gpio_pull_select(GPIO_LCD_MAKER_ID, GPIO_PULL_UP);
+        lcd_id1 = mt_get_gpio_in(GPIO_LCD_MAKER_ID);
+
+        mt_set_gpio_mode(GPIO_LCM_ID2_PIN, GPIO_MODE_00);
+        mt_set_gpio_dir(GPIO_LCM_ID2_PIN, GPIO_DIR_IN);
+        mt_set_gpio_pull_enable(GPIO_LCM_ID2_PIN, 1);
+        mt_set_gpio_pull_select(GPIO_LCM_ID2_PIN, GPIO_PULL_UP);
+        lcd_id2 =  mt_get_gpio_in(GPIO_LCM_ID2_PIN);
+
 	
 #ifndef BUILD_LK
- printk("kernel aeonlcm aeon_hx8394f_hd_dsi_vdo_e520_v552_xinli buffer[0] = 0x%x,buffer[1] = 0x%x,buffer[2] = 0x%x\n", buffer[0],buffer[1],buffer[2]);
+ printk("kernel aeonlcm aeon_hx8394f_hd_dsi_vdo_e520_v552_xinli buffer[0] = 0x%x,buffer[1] = 0x%x,buffer[2] = 0x%x, lcd_id1=%d, lcd_id2=%d\n", buffer[0],buffer[1],buffer[2],lcd_id1,lcd_id2);
 #else
- printf("kernel aeonlcm aeon_hx8394f_hd_dsi_vdo_e520_v552_xinli buffer[0] = 0x%x,buffer[1] = 0x%x,buffer[2] = 0x%x\n", buffer[0],buffer[1],buffer[2]);
+ printf("kernel aeonlcm aeon_hx8394f_hd_dsi_vdo_e520_v552_xinli buffer[0] = 0x%x,buffer[1] = 0x%x,buffer[2] = 0x%x, lcd_id1=%d, lcd_id2=%d\n", buffer[0],buffer[1],buffer[2],lcd_id1,lcd_id2);
 #endif
 
-    if(buffer[0] == 0x83)
+    if((buffer[0] == 0x83) && (lcd_id1 == 0) && (lcd_id2 == 0))
     {
     	return 1;
     }
@@ -739,7 +576,7 @@ MDELAY(20);
  	  dsi_set_cmdq(array, 1, 1);
  	  read_reg_v2(0xd9, &buffer[1], 1);
 
-   	  printk("esd check buffer[0]=0x%x,buffer[1]=0x%x \n", buffer[0],buffer[1]); 
+   	printk("esd check buffer[0]=0x%x,buffer[1]=0x%x \n", buffer[0],buffer[1]); 
 	  if((buffer[0]==0x1c)&&(buffer[1]==0x80))
           {
                   return 0;
@@ -752,14 +589,15 @@ MDELAY(20);
           return 0;
   #endif
   }
-  static unsigned int lcm_esd_recover(void)
-  {
+ 
+   static unsigned int lcm_esd_recover(void)
+   {
         #ifndef BUILD_LK        
         lcm_init();
         #endif
         return 1;
                             
-  }
+   }
   // ---------------------------------------------------------------------------
   //  Get LCM Driver Hooks
   // ---------------------------------------------------------------------------
