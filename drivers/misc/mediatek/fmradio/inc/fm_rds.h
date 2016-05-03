@@ -115,9 +115,9 @@ typedef struct rds_raw_t {
 } rds_raw_t;
 
 typedef struct rds_group_cnt_t {
-	unsigned int total;
-	unsigned int groupA[16];	/* RDS groupA counter */
-	unsigned int groupB[16];	/* RDS groupB counter */
+	unsigned long total;
+	unsigned long groupA[16];	/* RDS groupA counter */
+	unsigned long groupB[16];	/* RDS groupB counter */
 } rds_group_cnt_t;
 
 typedef enum rds_group_cnt_op_t {
