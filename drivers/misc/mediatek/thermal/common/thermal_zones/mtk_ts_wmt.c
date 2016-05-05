@@ -1150,6 +1150,9 @@ ssize_t wmt_wifi_algo_write(struct file *filp, const char __user *buf, size_t le
 
 	len = (len < (sizeof(desc) - 1)) ? len : (sizeof(desc) - 1);
 
+	if (len >= MAX_LEN-1)
+		len = MAX_LEN-1;
+
 	/* write data to the buffer */
 	if (copy_from_user(desc, buf, len))
 		return -EFAULT;
