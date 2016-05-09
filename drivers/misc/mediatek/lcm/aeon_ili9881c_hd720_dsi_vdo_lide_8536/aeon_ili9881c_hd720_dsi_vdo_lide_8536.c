@@ -51,8 +51,8 @@ static LCM_UTIL_FUNCS lcm_util = {0};
 #define UDELAY(n) 											(lcm_util.udelay(n))
 #define MDELAY(n) 											(lcm_util.mdelay(n))
 
-#define  GPIO_LCD_MAKER_ID    2
-#define  GPIO_LCM_ID2_PIN    64
+//#define  GPIO_LCD_MAKER_ID    2
+//#define  GPIO_LCM_ID2_PIN    64
 
 
 //#define _SYNA_INFO_
@@ -250,9 +250,9 @@ static struct LCM_setting_table lcm_initialization_setting[] = {
 	
 {0xFF,3,{0x98,0x81,0x01}},
 {0x22,1,{0x0A}},
-{0x31,1,{0x00}},
-{0x53,1,{0xA5}}, //0x98
-{0x55,1,{0x9F}}, //0x9A
+{0x31,1,{0x00}},// 0x02
+{0x53,1,{0xB1}},
+{0x55,1,{0x9F}},
 {0x50,1,{0x9A}},
 {0x51,1,{0x9A}},
 {0x60,1,{0x22 }},  //SDT}},
@@ -455,7 +455,7 @@ static unsigned int lcm_compare_id(void)
 
 	unsigned char buffer[5];
         unsigned int array[16];
-        unsigned int lcd_id1=-1, lcd_id2 = -1;
+        //unsigned int lcd_id1=-1, lcd_id2 = -1;
 	
 	SET_RESET_PIN(1);
 	MDELAY(10); 	
@@ -472,7 +472,7 @@ static unsigned int lcm_compare_id(void)
 	MDELAY(10);
 	read_reg_v2(0xA1, buffer, 3);
 	
-        mt_set_gpio_mode(GPIO_LCD_MAKER_ID, GPIO_MODE_00);
+        /*mt_set_gpio_mode(GPIO_LCD_MAKER_ID, GPIO_MODE_00);
         mt_set_gpio_dir(GPIO_LCD_MAKER_ID, GPIO_DIR_IN);
         mt_set_gpio_pull_enable(GPIO_LCD_MAKER_ID, 1);
         mt_set_gpio_pull_select(GPIO_LCD_MAKER_ID, GPIO_PULL_UP);
@@ -482,13 +482,13 @@ static unsigned int lcm_compare_id(void)
         mt_set_gpio_dir(GPIO_LCM_ID2_PIN, GPIO_DIR_IN);
         mt_set_gpio_pull_enable(GPIO_LCM_ID2_PIN, 1);
         mt_set_gpio_pull_select(GPIO_LCM_ID2_PIN, GPIO_PULL_UP);
-        lcd_id2 =  mt_get_gpio_in(GPIO_LCM_ID2_PIN);
+        lcd_id2 =  mt_get_gpio_in(GPIO_LCM_ID2_PIN);*/
 #ifdef BUILD_LK
-	printf("LK lcm_compare_id ili9881_lide buffer[0] = 0x%x,buffer[1] = 0x%x,buffer[2] = 0x%x, lcd_id1=%d,lcd_id2=%d\n",buffer[0],buffer[1],buffer[2], lcd_id1, lcd_id2);
+	printf("LK lcm_compare_id ili9881_lide buffer[0] = 0x%x,buffer[1] = 0x%x,buffer[2] = 0x%x, \n",buffer[0],buffer[1],buffer[2]);
 #else
 	printk("Kernel lcm_compare_id ili9881 buffer[0] = 0x%x,buffer[1] = 0x%x,buffer[2] = 0x%x\n",buffer[0],buffer[1],buffer[2]);
 #endif
-	if((buffer[2]==0xd) && (lcd_id1 == 0) && (lcd_id2 == 0))
+	if((buffer[2]==0xd))
 	{
 		return 1;
 	}
@@ -519,7 +519,14 @@ static void lcm_suspend(void)
 //	MDELAY(1);	
 //	SET_GPIO_OUT(GPIO_LCM_RST_PIN,1); 
     push_table(lcm_sleep_in_setting, sizeof(lcm_sleep_in_setting) / sizeof(struct LCM_setting_table), 1);
-	
+    MDELAY(20);//50
+
+        SET_RESET_PIN(1);
+	MDELAY(10);
+        SET_RESET_PIN(0);
+	MDELAY(20);//50
+        SET_RESET_PIN(1);
+
 //	push_table(lcm_sleep_in_setting, sizeof(lcm_sleep_in_setting) / sizeof(struct LCM_setting_table), 1);
     
 //	SET_GPIO_OUT(GPIO_LCM_PWR_EN,0);//Disable LCM Power
@@ -528,13 +535,7 @@ static void lcm_suspend(void)
 static void lcm_resume(void)
 {
 //	LCM_PRINT("%s %d\n", __func__,__LINE__);
-    SET_RESET_PIN(1);
-	MDELAY(20);//50
-    SET_RESET_PIN(0);
-	MDELAY(20);//50
-    SET_RESET_PIN(1);
-	MDELAY(10);//100
-	lcm_init();
+    	lcm_init();
 }
 
 #if 0
