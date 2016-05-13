@@ -147,6 +147,7 @@ static int tpd_keys_dim_local[TPD_KEY_COUNT][4] = TPD_KEYS_DIM;
 #endif
 static u8 boot_mode;
 
+unsigned int gesture_input = 0;
 // for DMA accessing
 static u8 *gpDMABuf_va;
 static dma_addr_t gpDMABuf_pa;
@@ -704,26 +705,32 @@ static ssize_t synaptics_rmi4_0dbutton_store(struct device *dev,
 }
 static DEVICE_ATTR(0dbutton, 0664, synaptics_rmi4_0dbutton_show, synaptics_rmi4_0dbutton_store);
 
+static ssize_t synaptics_rmi4_suspend_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%u\n", gesture_input);
+}
+
 static ssize_t synaptics_rmi4_suspend_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
-	unsigned int input;
+	//unsigned int gesture_input;
 
-	if (sscanf(buf, "%u", &input) != 1)
+	if (sscanf(buf, "%u", &gesture_input) != 1)
 		return -EINVAL;
 
-	if (input == 1){
+	if (gesture_input == 1){
                  printk("============== suspend \n");
 		//synaptics_rmi4_suspend(dev);
-        }else if (input == 0){
+        }else if (gesture_input == 0){
                  printk("============== resume \n");
 		//synaptics_rmi4_resume(dev);
-        }else
-		return -EINVAL;
-
+        }else{
+                 printk("============== nothing \n");
+        }
 	return count;
 }
-static DEVICE_ATTR(suspend, 0220, NULL, synaptics_rmi4_suspend_store);
+static DEVICE_ATTR(suspend, 0664, synaptics_rmi4_suspend_show, synaptics_rmi4_suspend_store);
 
 static ssize_t synaptics_rmi4_wake_gesture_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -3643,12 +3650,14 @@ static void tpd_resume(struct device *h)
 	printk("lijin01 into %s_____%d\n",__func__,__LINE__);
 
 	if (rmi4_data->enable_wakeup_gesture) {
+          if(gesture_input == 1){
 		printk("lijin into %s_____%d\n",__func__,__LINE__);
 		dev_info(&rmi4_data->i2c_client->dev,
 			"%s: Enter LPWG mode\n", __func__);
 		synaptics_rmi4_wakeup_gesture(rmi4_data, false);
 		goto exit;
-	}	
+          }
+        }	
 	retval = regulator_enable(tpd->reg);
 	if (retval != 0)
 	TPD_DMESG("Failed to enable reg-vgp6: %d\n", retval);
@@ -3669,24 +3678,62 @@ static void tpd_resume(struct device *h)
 exit:
 	rmi4_data->suspend = false;
 }
-static void tpd_suspend(struct device *h)
+static void synaptics_rmi4_sensor_sleep(struct synaptics_rmi4_data *rmi4_data)
 {
 	int retval;
-	printk("lijin01 into %s_____%d\n",__func__,__LINE__);
+	unsigned char device_ctrl;
+	
+	printk("--lanhai %s enter---\n", __func__);
 
-	if (rmi4_data->enable_wakeup_gesture) {
-	tpd_gpio_output(GTP_RST_PORT, 0);
-	msleep(20);
-	tpd_gpio_output(GTP_RST_PORT, 1);
-	msleep(20);
-		printk("lijin into %s_____%d\n",__func__,__LINE__);
-		dev_info(&rmi4_data->i2c_client->dev,
-			"%s: Enter LPWG mode\n", __func__);
-		synaptics_rmi4_wakeup_gesture(rmi4_data, true);
-		goto exit;
+	retval = synaptics_rmi4_i2c_read(rmi4_data,
+			rmi4_data->f01_ctrl_base_addr,
+			&device_ctrl,
+			sizeof(device_ctrl));
+	if (retval < 0) {
+		dev_err(&(rmi4_data->input_dev->dev),
+				"%s: Failed to enter sleep mode\n",
+				__func__);
+		return;
 	}
 
+	device_ctrl = (device_ctrl & ~MASK_3BIT);
+	device_ctrl = (device_ctrl | NO_SLEEP_OFF | SENSOR_SLEEP);
 
+	retval = synaptics_rmi4_i2c_write(rmi4_data,
+			rmi4_data->f01_ctrl_base_addr,
+			&device_ctrl,
+			sizeof(device_ctrl));
+	if (retval < 0) {
+		dev_err(&(rmi4_data->input_dev->dev),
+				"%s: Failed to enter sleep mode\n",
+				__func__);
+		return;
+	}
+
+	rmi4_data->sensor_sleep = true;
+	
+	printk("--lanhai %s end---\n", __func__);
+
+	return;
+}
+
+static void tpd_suspend(struct device *h)
+{
+	//int retval;
+	printk("lijin01 into %s_____%d\n",__func__,__LINE__);
+
+	if (rmi4_data->enable_wakeup_gesture)  {
+          if(gesture_input == 1){
+	    tpd_gpio_output(GTP_RST_PORT, 0);
+	    msleep(20);
+	    tpd_gpio_output(GTP_RST_PORT, 1);
+	    msleep(20);
+	    printk("lijin into %s_____%d\n",__func__,__LINE__);
+	    dev_info(&rmi4_data->i2c_client->dev, "%s: Enter LPWG mode\n", __func__);
+	    synaptics_rmi4_wakeup_gesture(rmi4_data, true);
+	    goto exit;
+          }	
+        }
 	
 	mutex_lock(&i2c_access);
 
@@ -3696,11 +3743,15 @@ static void tpd_suspend(struct device *h)
 	mutex_unlock(&i2c_access);
 	
         /* Set RST PIN to low */
-	tpd_gpio_output(GTP_RST_PORT, 0);
-		retval = regulator_disable(tpd->reg);
-	if (retval != 0)
-		TPD_DMESG("Failed to disable reg-vgp6: %d\n", retval);
+	//tpd_gpio_output(GTP_RST_PORT, 0);
+	//retval = regulator_disable(tpd->reg);
+	//if (retval != 0)
+	//	TPD_DMESG("Failed to disable reg-vgp6: %d\n", retval);
+	synaptics_rmi4_sensor_sleep(rmi4_data);
+	synaptics_rmi4_free_fingers(rmi4_data);
+	rmi4_data->irq_enabled = false; 
 
+	mutex_unlock(&exp_data.mutex);
 	printk("TPD enter sleep\n");
 	exit:
 	rmi4_data->suspend = true;

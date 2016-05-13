@@ -889,7 +889,7 @@ static MDP_COLOR_CAP mdp_color_cap;
 #if defined(CONFIG_FPGA_EARLY_PORTING) || defined(DISP_COLOR_OFF)
 static int g_color_bypass = 1;
 #else
-static int g_color_bypass;
+static int g_color_bypass = 1;
 #endif
 static int g_tdshp_flag;	/* 0: normal, 1: tuning mode */
 int ncs_tuning_mode = 0;

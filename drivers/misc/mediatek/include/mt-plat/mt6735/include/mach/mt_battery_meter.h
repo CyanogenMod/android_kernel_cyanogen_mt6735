@@ -67,7 +67,7 @@
 #define R_FG_BOARD_BASE 1000
 #define R_FG_BOARD_SLOPE 1000 /*slope*/
 #ifdef CONFIG_MTK_EMI_D1P
-#define CAR_TUNE_VALUE 104 /*1.00*/
+#define CAR_TUNE_VALUE 101 /*1.00*/
 #else
 #define CAR_TUNE_VALUE 91 /*1.00*/
 #endif
@@ -126,7 +126,7 @@
 #define LOW_POWER_WAKEUP_PERIOD		300
 #define CLOSE_POWEROFF_WAKEUP_PERIOD	30
 
-#define INIT_SOC_BY_SW_SOC
+//#define INIT_SOC_BY_SW_SOC
 /*
 //#define SYNC_UI_SOC_IMM			//3. UI SOC sync to FG SOC immediately
 */
@@ -136,7 +136,7 @@
 //#define Q_MAX_BY_CURRENT		//7. Qmax variant by current loading.
 */
 #define FG_BAT_INT
-#define IS_BATTERY_REMOVE_BY_PMIC
+//#define IS_BATTERY_REMOVE_BY_PMIC
 
 #elif defined(CONFIG_ARCH_MT6735M)
 /* ============================================================
