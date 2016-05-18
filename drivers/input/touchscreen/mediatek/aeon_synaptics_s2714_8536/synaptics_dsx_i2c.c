@@ -147,7 +147,7 @@ static int tpd_keys_dim_local[TPD_KEY_COUNT][4] = TPD_KEYS_DIM;
 #endif
 static u8 boot_mode;
 
-unsigned int gesture_input = 0;
+unsigned int gesture_input = 1;
 // for DMA accessing
 static u8 *gpDMABuf_va;
 static dma_addr_t gpDMABuf_pa;
@@ -3605,6 +3605,24 @@ static struct i2c_driver tpd_i2c_driver = {
 	.address_list = (const unsigned short *)forces,
 };
 
+static ssize_t enable_gesture_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+          return snprintf(buf, PAGE_SIZE, "%u\n", gesture_input);
+}
+
+static ssize_t enable_gesture_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+          if (sscanf(buf, "%u", &gesture_input) != 1)
+            return -EINVAL;
+          gesture_input = gesture_input > 0 ? 1 : 0;
+          return count;
+}
+static DEVICE_ATTR(enable_gesture, 0664, enable_gesture_show, enable_gesture_store);
+
+static struct device_attribute *synaptics_attrs[] = {
+    &dev_attr_enable_gesture,
+};
+
 static int tpd_local_init(void)
 {
     int ret;
@@ -3649,14 +3667,12 @@ static void tpd_resume(struct device *h)
 	int retval;
 	printk("lijin01 into %s_____%d\n",__func__,__LINE__);
 
-	if (rmi4_data->enable_wakeup_gesture) {
-          if(gesture_input == 1){
+        if(gesture_input == 1){
 		printk("lijin into %s_____%d\n",__func__,__LINE__);
 		dev_info(&rmi4_data->i2c_client->dev,
 			"%s: Enter LPWG mode\n", __func__);
 		synaptics_rmi4_wakeup_gesture(rmi4_data, false);
 		goto exit;
-          }
         }	
 	retval = regulator_enable(tpd->reg);
 	if (retval != 0)
@@ -3722,8 +3738,7 @@ static void tpd_suspend(struct device *h)
 	//int retval;
 	printk("lijin01 into %s_____%d\n",__func__,__LINE__);
 
-	if (rmi4_data->enable_wakeup_gesture)  {
-          if(gesture_input == 1){
+        if(gesture_input == 1){
 	    tpd_gpio_output(GTP_RST_PORT, 0);
 	    msleep(20);
 	    tpd_gpio_output(GTP_RST_PORT, 1);
@@ -3732,7 +3747,6 @@ static void tpd_suspend(struct device *h)
 	    dev_info(&rmi4_data->i2c_client->dev, "%s: Enter LPWG mode\n", __func__);
 	    synaptics_rmi4_wakeup_gesture(rmi4_data, true);
 	    goto exit;
-          }	
         }
 	
 	mutex_lock(&i2c_access);
@@ -3769,6 +3783,10 @@ static struct tpd_driver_t tpd_device_driver = {
 #else
 	.tpd_have_button = 0,
 #endif		
+        .attrs = {
+             .attr = synaptics_attrs,
+             .num  = ARRAY_SIZE(synaptics_attrs),
+        },
 };
 
 /* called when loaded into kernel */
