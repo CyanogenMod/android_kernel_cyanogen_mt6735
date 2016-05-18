@@ -913,7 +913,7 @@ static struct cfg80211_ops mtk_wlan_ops = {
 	.tdls_mgmt = TdlsexCfg80211TdlsMgmt,
 	.tdls_oper = TdlsexCfg80211TdlsOper,
 #endif /* CFG_SUPPORT_TDLS */
-#if 1				/* Remove schedule_scan because we need more verification for NLO */
+#if 0				/* Remove schedule_scan because we need more verification for NLO */
 	.sched_scan_start = mtk_cfg80211_sched_scan_start,
 	.sched_scan_stop = mtk_cfg80211_sched_scan_stop,
 #endif
