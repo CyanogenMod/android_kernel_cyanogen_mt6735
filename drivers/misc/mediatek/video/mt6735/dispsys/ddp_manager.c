@@ -1810,7 +1810,6 @@ int dpmgr_path_user_cmd(disp_path_handle dp_handle, int msg, unsigned long arg, 
 	case DISP_IOCTL_GET_PQ_GAL_PARAM:
 	case DISP_IOCTL_PQ_SET_BYPASS_COLOR:
 	case DISP_IOCTL_PQ_SET_WINDOW:
-	case DISP_IOCTL_WRITE_REG:
 	case DISP_IOCTL_READ_REG:
 	case DISP_IOCTL_MUTEX_CONTROL:
 	case DISP_IOCTL_PQ_GET_TDSHP_FLAG:
