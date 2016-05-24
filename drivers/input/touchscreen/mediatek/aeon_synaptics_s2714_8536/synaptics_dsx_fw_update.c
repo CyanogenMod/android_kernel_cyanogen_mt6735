@@ -30,7 +30,7 @@
 extern int tpd_firmware_version[2];
 #define FW_IMAGE_NAME "synaptics/startup_fw_update.img"
 //#define FW_IMAGE_NAME_TXD "synaptics/startup_fw_update.img"
-#define DO_STARTUP_FW_UPDATE
+//#define DO_STARTUP_FW_UPDATE
 #define STARTUP_FW_UPDATE_DELAY_MS 1000 /* ms */
 #define FORCE_UPDATE false
 #define DO_LOCKDOWN false
