@@ -509,13 +509,13 @@ static void hw_bc11_done(void)
 	bc11_set_register_value(PMIC_RG_USBDL_RST,0x1);//force leave USBDL mode
 
 	#if defined(HIGH_BATTERY_VOLTAGE_SUPPORT)
-        bq24158_reg_config_interface(0x06,0x77); // ISAFE = 1250mA, VSAFE = 4.34V
+        bq24158_reg_config_interface(0x06,0x47); // ISAFE = 1250mA, VSAFE = 4.34V
     #else
         bq24158_reg_config_interface(0x06,0x70);
 	#endif
 	    
     bq24158_reg_config_interface(0x00,0x80);	//kick chip watch dog, disable STAT pin funtion (sanford.lin)
-    bq24158_reg_config_interface(0x01,0xb8);	//TE=1, CE=0, HZ_MODE=0, OPA_MODE=0
+    bq24158_reg_config_interface(0x01,0xf8);	//TE=1, CE=0, HZ_MODE=0, OPA_MODE=0
     bq24158_reg_config_interface(0x05,0x04);
 
 	if ( !charging_init_flag ) {

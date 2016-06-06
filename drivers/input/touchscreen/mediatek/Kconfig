@@ -227,4 +227,16 @@ config TOUCHSCREEN_MTK_AEON_NT11205_HD720_HLT_8536
 
 source "drivers/input/touchscreen/mediatek/aeon_nt11205_hd720_hlt_8536/Kconfig"	  
 
+config TOUCHSCREEN_AEON_FT5X0X_8630
+	bool "aeon touchscreen ft5x0x 8630 for Eastaeon package"
+	default n
+	help
+	  Say Y here if you have aeon_ft5x0x touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+source "drivers/input/touchscreen/mediatek/aeon_ft5x0x_hd720_lide_8630/Kconfig"
+
 endif

@@ -19,6 +19,7 @@ else
 
 obj-$(CONFIG_MTK_AF7133)	+=  af7133/
 obj-$(CONFIG_MTK_AF7133_NEW)	+=  af7133-new/
+obj-$(CONFIG_MTK_AF8133_NEW)	+=  af8133-new/
 obj-$(CONFIG_MTK_AKM8963)	+=  akm8963/
 obj-$(CONFIG_MTK_AKM8963_NEW)	+=  akm8963-new/
 obj-$(CONFIG_MTK_AKM8975)	+=  akm8975/

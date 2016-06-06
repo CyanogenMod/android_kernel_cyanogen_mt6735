@@ -59,6 +59,14 @@ LCM_DRIVER *lcm_driver_list[] = {
 	&otm1287a_hd720_dsi_vdo_e539_l521_ld_lcm_drv,
 #endif
 
+#if defined(AEON_HX8399_FHD_DSI_VDO_E550_LEAD)
+	&aeon_hx8399_fhd_dsi_vdo_e550_lead_lcm_drv,
+#endif
+
+#if defined(AEON_HX8394_HD720_DSI_VDO_8630_LEAD)
+	&aeon_hx8394_hd720_dsi_vdo_8630_lead_lcm_drv,
+#endif
+
 /* ================================eastaeon==================================== */
 
 #endif

@@ -1,0 +1,9 @@
+
+config MTK_AF8133_NEW
+	bool "AF8133 for MediaTek package"
+	default n
+	help
+	  It support different magnetometer sensor.
+          If this option is set,
+	  it will support
+          AF8133 magnetometer

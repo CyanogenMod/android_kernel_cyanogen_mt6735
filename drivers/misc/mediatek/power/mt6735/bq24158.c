@@ -184,7 +184,7 @@ unsigned int bq24158_reg_config_interface (unsigned char RegNum, unsigned char v
 
     return ret;
 }
-
+EXPORT_SYMBOL(bq24158_reg_config_interface);
 /**********************************************************
   *
   *   [Internal Function] 
@@ -590,6 +590,8 @@ static int bq24158_driver_probe(struct i2c_client *client, const struct i2c_devi
 
     //---------------------
   //  bq24158_hw_init();
+
+    bq24158_reg_config_interface(0x06,0x47); // ISAFE = 1050mA, VSAFE = 4.34V
     bq24158_dump_register();
     chargin_hw_init_done = KAL_TRUE;
 	

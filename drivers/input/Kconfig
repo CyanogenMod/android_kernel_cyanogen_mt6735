@@ -197,6 +197,8 @@ comment "Input Device Drivers"
 
 source "drivers/input/keyboard/Kconfig"
 
+source "drivers/input/hall/Kconfig"
+
 source "drivers/input/mouse/Kconfig"
 
 source "drivers/input/joystick/Kconfig"
