@@ -171,6 +171,6 @@
 #define ALS_MIN_DELAY   100
 #define PS_MIN_DELAY    10
 
-#define STK_ALS_CODE_CHANGE_THD	5
+#define STK_ALS_CODE_CHANGE_THD	10
 
 #endif

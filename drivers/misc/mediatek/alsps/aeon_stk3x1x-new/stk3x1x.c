@@ -68,7 +68,7 @@
 //#define STK_PS_DEBUG
 #define STK_TUNE0
 #define CALI_EVERY_TIME
-#define STK_ALS_FIR
+//#define STK_ALS_FIR
 //#define STK_IRS
 //#define STK_CHK_REG
 //#define STK_GES
@@ -97,9 +97,9 @@
 static DEFINE_MUTEX(stk3x1x_mutex);
 
 #ifdef STK_TUNE0
-	#define STK_MAX_MIN_DIFF	240
-	#define STK_LT_N_CT	120  //
-	#define STK_HT_N_CT	200 //100
+	#define STK_MAX_MIN_DIFF	200
+	#define STK_LT_N_CT	100  //
+	#define STK_HT_N_CT	150 //100
 	
 #endif /* #ifdef STK_TUNE0 */
 
