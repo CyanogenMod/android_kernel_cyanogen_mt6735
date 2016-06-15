@@ -57,7 +57,7 @@ when              comment tag        who                  what, where, why
 #define S5K3M2_I2C_WRITE_ID             0x5A
 
 kal_uint8 MID=0;
-#define TRULY_ID 2
+#define TRULY_ID 35 //2
 kal_uint32 R_Gr_Ratio=0; 
 kal_uint32 B_Gr_Ratio=0;
 kal_uint32 Gb_Gr_Ratio=0;
@@ -279,8 +279,8 @@ kal_bool get_otp_wb(kal_uint8 groupIdx)
     Gb_Gr_Ratio = (otp_read_8(0x0A12 + groupIdx*32)<<8)|otp_read_8(0x0A13 + groupIdx*32);
 	stop_read_otp();
 
-	RG_Ratio_typical = 531;
-    BG_Ratio_typical = 511;
+	RG_Ratio_typical = 547;
+    BG_Ratio_typical = 612;
     
     printk("S5K3M2 zcw++:Group[%d] r_Gr=%d,b_Gr=%d,Gb_Gr=%d \n",groupIdx, R_Gr_Ratio, B_Gr_Ratio, Gb_Gr_Ratio);
 	return 1;

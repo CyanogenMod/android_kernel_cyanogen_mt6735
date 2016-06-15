@@ -1908,7 +1908,16 @@ static void sensor_init(void)
   write_cmos_sensor(0x3B5C, 0x0006);
   
   //For PDAF on, OB=64 & dunamic bpc must off
-  
+   	mdelay(2);
+  // Stream On
+  //write_cmos_sensor(0x602A, 0x0100);
+  //write_cmos_sensor_8(0x6F12, 0x01);
+
+	otp_wb_update();//vivo zcw++ 20140910
+	otp_lsc_update();
+
+    mdelay(5);//vivo zcw++ 20141027 Add for prevent WAIT_IRQ timeout	
+    LOG_INF("Exit\n");
   //For power consumption, need apply straong MTK bpc patch
   } else { // all other ID
     LOG_INF("-- sensor_init, Read back other chip id = 0x%x\n", chip_id);
