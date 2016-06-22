@@ -43,7 +43,7 @@
 #define PFX "OV8858"
 
 #define OV8858R2AOTP
-
+int ov8858_otp  = 0;
 //#define LOG_WRN(format, args...) xlog_printk(ANDROID_LOG_WARN ,PFX, "[%S] " format, __FUNCTION__, ##args)
 //#defineLOG_INF(format, args...) xlog_printk(ANDROID_LOG_INFO ,PFX, "[%s] " format, __FUNCTION__, ##args)
 //#define LOG_DBG(format, args...) xlog_printk(ANDROID_LOG_DEBUG ,PFX, "[%S] " format, __FUNCTION__, ##args)
@@ -54,8 +54,9 @@ typedef enum {
 }OV8858_VERSION;
 
 OV8858_VERSION ov8858version = OV8858R2A;
-
+ 
 static DEFINE_SPINLOCK(imgsensor_drv_lock);
+static kal_uint32 set_test_pattern_mode(kal_bool enable);
 
 static imgsensor_info_struct imgsensor_info = { 
 	.sensor_id = OV8858_SENSOR_ID,		//record sensor id defined in Kd_imgsensor.h
@@ -1654,6 +1655,7 @@ int read_otp(struct otp_struct *otp_ptr)
 	//set 0x5002[3] to ¡°1¡±
 	temp1 = read_cmos_sensor(0x5002);
 	write_cmos_sensor(0x5002, (0x08 & 0x08) | (temp1 & (~0x08)));
+	printk("--->>>[OV8858OTP  (*otp_ptr).flag=%d\n", (*otp_ptr).flag);
 	return (*otp_ptr).flag;
 }
 // return value:
@@ -1765,17 +1767,18 @@ static kal_uint32 open(void)
 	if (imgsensor_info.sensor_id != sensor_id)
 		return ERROR_SENSOR_CONNECT_FAIL;
 	
-	/* initail sequence write in  */
+        /* initail sequence write in  */
 	sensor_init();
-	
+
 	mdelay(10);
 	#ifdef OV8858R2AOTP
 		LOG_INF("Apply the sensor OTP\n");
 		//struct otp_struct *otp_ptr = (struct otp_struct *)kzalloc(sizeof(struct otp_struct), GFP_KERNEL);
-		read_otp(otp_ptr);
+		ov8858_otp = read_otp(otp_ptr);
 		apply_otp(otp_ptr);
 		kfree(otp_ptr);
 	#endif
+       
 	spin_lock(&imgsensor_drv_lock);
 
 	imgsensor.autoflicker_en= KAL_FALSE;
@@ -1845,6 +1848,9 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 					  MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
 	LOG_INF("E\n");
+
+        if (ov8858_otp < 208)
+            set_test_pattern_mode(1);
 
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.sensor_mode = IMGSENSOR_MODE_PREVIEW;

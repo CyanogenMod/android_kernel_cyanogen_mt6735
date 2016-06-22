@@ -34,7 +34,7 @@
 
 //#define SKY81294
 //#define LM3642TLX
-//#define SGM3785
+#define SGM3785
 //MTK Internal chip
 /******************************************************************************
  * Debug configuration
@@ -543,7 +543,7 @@ static int FL_getErr(int* err)
 //#define FLASH_GPIO_ENF GPIO_CAMERA_FLASH_EN_PIN
 //#define FLASH_GPIO_ENM GPIO_CAMERA_FLASH_MODE_PIN
 //#define FLASH_GPIO_ENM_M_PWM GPIO_CAMERA_FLASH_MODE_PIN_M_PWM
-#define PMW_NUM PWM1
+#define PMW_NUM PWM2
 /*****************************************************************************
 Functions
 *****************************************************************************/
@@ -576,7 +576,7 @@ static void gpio_pwm_flash_50(void)
 	struct pwm_spec_config pwm_setting;
 	printk("%s Enter\n",__func__);
 	//mt_set_gpio_mode(FLASH_GPIO_ENM,FLASH_GPIO_ENM_M_PWM);
-	aeon_gpio_set("aeon_flash_enm_pwm");
+	//aeon_gpio_set("aeon_flash_enm_pwm");
 	pwm_setting.pwm_no  = PMW_NUM;
 	pwm_setting.mode    = PWM_MODE_FIFO;
 	pwm_setting.clk_div = CLK_DIV8;
@@ -589,7 +589,7 @@ static void gpio_pwm_flash_50(void)
 	pwm_setting.PWM_MODE_FIFO_REGS.GDURATION = 0;
 	pwm_setting.PWM_MODE_FIFO_REGS.WAVE_NUM  = 0;
 	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA0 = 0xffffffff;   //50%
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA1 = 0x00000000;
+	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA1 = 0x000fffff;
 	pwm_set_spec_config(&pwm_setting);
 }
 
@@ -603,36 +603,38 @@ static void gpio_flash_close(void)
 	//mt_set_gpio_mode(FLASH_GPIO_ENF, GPIO_MODE_00);
 	//mt_set_gpio_dir(FLASH_GPIO_ENF,GPIO_DIR_OUT);
 	//mt_set_gpio_out(FLASH_GPIO_ENF, GPIO_OUT_ZERO);
-	aeon_gpio_set("aeon_flash_enf0");
+	//aeon_gpio_set("aeon_flash_enf0");
 }
 
 static int FL_Enable(void)
 {
-	struct pwm_spec_config pwm_setting ;
+	//struct pwm_spec_config pwm_setting ;
 	PK_DBG(" FL_Enable g_duty = %d\n",g_duty);
 
-	if(g_duty > 0)//flashlight
+	if(g_duty > 1)//flashlight
 	{
+	    aeon_gpio_set("aeon_flash_enm0");
+		mdelay(2); 
 		gpio_pwm_flash_50();
 		//mt_set_gpio_mode(FLASH_GPIO_ENF, GPIO_MODE_00);
 		//mt_set_gpio_dir(FLASH_GPIO_ENF, GPIO_DIR_OUT);
 		//mt_set_gpio_out(FLASH_GPIO_ENF, GPIO_OUT_ONE);
-		aeon_gpio_set("aeon_flash_enf1");
+		//aeon_gpio_set("aeon_flash_enf1");
 	}
 	else//torch
 	{
 		//mt_set_gpio_mode(FLASH_GPIO_ENF, GPIO_MODE_00);
 		//mt_set_gpio_dir(FLASH_GPIO_ENF, GPIO_DIR_OUT);
 		//mt_set_gpio_out(FLASH_GPIO_ENF, GPIO_OUT_ZERO);
-		aeon_gpio_set("aeon_flash_enf0");
-		pwm_setting.pwm_no  = PMW_NUM;
-		mt_pwm_disable(pwm_setting.pwm_no, false);
+		//aeon_gpio_set("aeon_flash_enf0");
+		//pwm_setting.pwm_no  = PMW_NUM;
+		//mt_pwm_disable(pwm_setting.pwm_no, false);
 		//mt_set_gpio_mode(FLASH_GPIO_ENM, GPIO_MODE_00);
 		//mt_set_gpio_dir(FLASH_GPIO_ENM, GPIO_DIR_OUT);
 		//mt_set_gpio_out(FLASH_GPIO_ENM, GPIO_OUT_ONE);
 		aeon_gpio_set("aeon_flash_enm1");
-		mdelay(10); 
-		gpio_pwm_flash_50();
+		//mdelay(10); 
+		//gpio_pwm_flash_50();
 	}
     return 0;
 }

@@ -1,3 +1,4 @@
+//0.25T glass
 #ifndef BUILD_LK
 #include <linux/string.h>
 #endif
@@ -102,7 +103,6 @@ struct LCM_setting_table {
 };
 
 static struct LCM_setting_table lcm_initialization_setting[] = {
-
 {0xFF,3,{0x98,0x81,0x03}},
 {0x01,1,{0x00}},
 {0x02,1,{0x00}},
@@ -172,8 +172,7 @@ static struct LCM_setting_table lcm_initialization_setting[] = {
 {0x42,1,{0x00}},
 {0x43,1,{0x00}},
 {0x44,1,{0x00}},
-	
-	
+
 {0x50,1,{0x01}},
 {0x51,1,{0x23}},
 {0x52,1,{0x45}},
@@ -188,8 +187,7 @@ static struct LCM_setting_table lcm_initialization_setting[] = {
 {0x5B,1,{0xAB}},
 {0x5C,1,{0xCD}},
 {0x5D,1,{0xEF}},
-	
-	
+
 {0x5E,1,{0x11}},
 {0x5F,1,{0x01}},
 {0x60,1,{0x00}},
@@ -239,78 +237,77 @@ static struct LCM_setting_table lcm_initialization_setting[] = {
 {0xFF,3,{0x98,0x81,0x04}},
 {0x6C,1,{0x15}},
 {0x6E,1,{0x2A}},
-{0x6F,1,{0x35}},
+{0x6F,1,{0x33}},
 {0x3A,1,{0x94}},
-{0x8D,1,{0x15}},
+{0x8D,1,{0x14}},
 {0x87,1,{0xBA}},
 {0x26,1,{0x76}},
 {0xB2,1,{0xD1}},
 {0xB5,1,{0x06}},
-	
-	
+
 {0xFF,3,{0x98,0x81,0x01}},
 {0x22,1,{0x0A}},
 {0x31,1,{0x00}},
-{0x53,1,{0xB1}}, //0x98
-{0x55,1,{0x8F}}, //0x9A
-{0x50,1,{0x9A}},
-{0x51,1,{0x9A}},
-{0x60,1,{0x22 }},  //SDT}},
-{0x61,1,{0x00 }},
-{0x62,1,{0x19 }},
-{0x63,1,{0x10 }},
+{0x53,1,{0x90}},
+{0x55,1,{0xA2}},
+{0x50,1,{0xA5}},		       //VREG1OUT=4.7V
+{0x51,1,{0xA0}},		       //VREG2OUT=-4.7V 
+{0x60,1,{0x22}},               //SDT}},
+{0x61,1,{0x00}},
+{0x62,1,{0x19}},
+{0x63,1,{0x10}},
 
-{0xA0,1,{0x08}},
-{0xA1,1,{0x10}},
-{0xA2,1,{0x19}},
-{0xA3,1,{0x0E}},
-{0xA4,1,{0x0E}},
-{0xA5,1,{0x1E}},
-{0xA6,1,{0x13}},
-{0xA7,1,{0x18}},
-{0xA8,1,{0x4C}},
-{0xA9,1,{0x1A}},
-{0xAA,1,{0x27}},
-{0xAB,1,{0x42}},
-{0xAC,1,{0x1D}},
-{0xAD,1,{0x1D}},
-{0xAE,1,{0x51}},
-{0xAF,1,{0x26}},
-{0xB0,1,{0x2A}},
-{0xB1,1,{0x3E}},
-{0xB2,1,{0x4D}},
-{0xB3,1,{0x3F}},
-	
-{0xC0,1,{0x08}},
-{0xC1,1,{0x10}},
-{0xC2,1,{0x19}},
-{0xC3,1,{0x0E}},
-{0xC4,1,{0x0E}},
-{0xC5,1,{0x1E}},
-{0xC6,1,{0x13}},
-{0xC7,1,{0x18}},
-{0xC8,1,{0x4C}},
-{0xC9,1,{0x1A}},
-{0xCA,1,{0x27}},
-{0xCB,1,{0x42}},
-{0xCC,1,{0x1D}},
-{0xCD,1,{0x1D}},
-{0xCE,1,{0x51}},
-{0xCF,1,{0x26}},
-{0xD0,1,{0x2A}},
-{0xD1,1,{0x3E}},
-{0xD2,1,{0x4D}},
-{0xD3,1,{0x3F}},
-	
+{0xA0,1,{0x08}},		       //VP255	Gamma P
+{0xA1,1,{0x12}},               //VP251       
+{0xA2,1,{0x1A}},               //VP247        
+{0xA3,1,{0x10}},               //VP243        
+{0xA4,1,{0x10}},               //VP239        
+{0xA5,1,{0x21}},               //VP231        
+{0xA6,1,{0x15}},               //VP219        
+{0xA7,1,{0x19}},               //VP203        
+{0xA8,1,{0x53}},               //VP175        
+{0xA9,1,{0x1A}},               //VP144        
+{0xAA,1,{0x26}},               //VP111        
+{0xAB,1,{0x4C}},               //VP80        
+{0xAC,1,{0x19}},               //VP52         
+{0xAD,1,{0x18}},               //VP36         
+{0xAE,1,{0x4C}},               //VP24         
+{0xAF,1,{0x21}},               //VP16         
+{0xB0,1,{0x27}},               //VP12         
+{0xB1,1,{0x4C}},               //VP8          
+{0xB2,1,{0x61}},               //VP4          
+{0xB3,1,{0x39}},               //VP0          
+
+{0xC0,1,{0x08}},		       //VN255 GAMMA N
+{0xC1,1,{0x12}},               //VN251       
+{0xC2,1,{0x1A}},               //VN247       
+{0xC3,1,{0x10}},               //VN243       
+{0xC4,1,{0x10}},               //VN239        
+{0xC5,1,{0x21}},               //VN231       
+{0xC6,1,{0x15}},              //VN219       
+{0xC7,1,{0x19}},               //VN203       
+{0xC8,1,{0x53}},               //VN175        
+{0xC9,1,{0x1A}},              //VN144        
+{0xCA,1,{0x26}},               //VN111        
+{0xCB,1,{0x4C}},               //VN80        
+{0xCC,1,{0x19}},               //VN52         
+{0xCD,1,{0x18}},              //VN36         
+{0xCE,1,{0x4C}},               //VN24         
+{0xCF,1,{0x21}},               //VN16         
+{0xD0,1,{0x27}},               //VN12         
+{0xD1,1,{0x4C}},               //VN8          
+{0xD2,1,{0x61}},               //VN4          
+{0xD3,1,{0x39}},               //VN0
+
 {0xFF,3,{0x98,0x81,0x00}},
 {0x35,1,{0x00}},
-{0x11,1, {0x00}},
+{0x11,1,{0x00}},
 {REGFLAG_DELAY, 120, {}},
-
-{0x29, 1, {0x00}},
+{0x29,1,{0x00}},
 {REGFLAG_DELAY, 20, {}},
 
 {REGFLAG_END_OF_TABLE, 0x00, {}}
+
 };
 /*
 static struct LCM_setting_table lcm_sleep_out_setting[] = {
@@ -463,14 +460,7 @@ static unsigned int lcm_compare_id(void)
 	MDELAY(20);
 	SET_RESET_PIN(1);
 	MDELAY(80);  
-	//array[0]=0x00043902;
-	//array[1]=0x018712ff;
-	//dsi_set_cmdq(array, 2, 1);
-	//MDELAY(10);
-	//array[0] = 0x00033700;
-	//dsi_set_cmdq(array, 1, 1);
-	//MDELAY(10);
-	read_reg_v2(0xDA, buffer, 3);
+	read_reg_v2(0xda, buffer, 3);
 	
         /*mt_set_gpio_mode(GPIO_LCD_MAKER_ID, GPIO_MODE_00);
         mt_set_gpio_dir(GPIO_LCD_MAKER_ID, GPIO_DIR_IN);
@@ -484,11 +474,11 @@ static unsigned int lcm_compare_id(void)
         mt_set_gpio_pull_select(GPIO_LCM_ID2_PIN, GPIO_PULL_UP);
         lcd_id2 =  mt_get_gpio_in(GPIO_LCM_ID2_PIN);*/
 #ifdef BUILD_LK
-	printf("LK lcm_compare_id ili9881_lide buffer[0] = 0x%x,buffer[1] = 0x%x,buffer[2] = 0x%x, \n",buffer[0],buffer[1],buffer[2]);
+	printf("LK lcm_compare_id ili9881_lide_D buffer[0] = 0x%x,buffer[1] = 0x%x,buffer[2] = 0x%x \n",buffer[0],buffer[1],buffer[2]);
 #else
-	printk("Kernel lcm_compare_id ili9881 buffer[0] = 0x%x,buffer[1] = 0x%x,buffer[2] = 0x%x\n",buffer[0],buffer[1],buffer[2]);
+	printk("KERNEL lcm_compare_id ili9881_lide_D buffer[0] = 0x%x,buffer[1] = 0x%x,buffer[2] = 0x%x \n",buffer[0],buffer[1],buffer[2]);
 #endif
-	if((buffer[0]==0x00))
+	if((buffer[0]==0x02))
 	{
 		return 1;
 	}
@@ -574,9 +564,9 @@ static void lcm_update(unsigned int x, unsigned int y,
 }
 #endif
 
-LCM_DRIVER aeon_ili9881c_hd720_dsi_vdo_lide_8536_lcm_drv = 
+LCM_DRIVER aeon_ili9881c_hd720_dsi_vdo_lide_8536_D_lcm_drv = 
 {
-    .name			= "aeon_ili9881c_hd720_dsi_vdo_lide_8536",
+    .name			= "aeon_ili9881c_hd720_dsi_vdo_lide_8536_D",
 	.set_util_funcs = lcm_set_util_funcs,
 	.get_params     = lcm_get_params,
 	.init           = lcm_init,

@@ -45,7 +45,8 @@
 #define LOG_INF(format, args...)	//xlog_printk(ANDROID_LOG_INFO   , PFX, "[%s] " format, __FUNCTION__, ##args)
 
 static DEFINE_SPINLOCK(imgsensor_drv_lock);
-
+int ov8865_otp = 0;
+static kal_uint32 set_test_pattern_mode(kal_bool enable);
 static imgsensor_info_struct imgsensor_info = { 
 	.sensor_id = OV8865_SENSOR_ID,
 	
@@ -1790,6 +1791,7 @@ static int read_otp(struct otp_struct *otp_ptr)
 	}
 	//set 0x5002 to 0x08
 	write_cmos_sensor(0x5002, 0x08); // enable OTP_DPC
+	printk("--->>>[OV8865OTP] (*otp_ptr).flag = 0x%x \n", (*otp_ptr).flag);
 	return (*otp_ptr).flag;
 }
 
@@ -1913,7 +1915,7 @@ static kal_uint32 open(void)
 	/* initail sequence write in  */
 	sensor_init();
 //lijin add for otp start
-	read_otp(&ov8865_otp_data);
+	ov8865_otp = read_otp(&ov8865_otp_data);
 	mdelay(10);
 	apply_otp(&ov8865_otp_data);
 //lijin end
@@ -1986,6 +1988,9 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 					  MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
 	LOG_INF("E\n");
+        
+        if(ov8865_otp < 208)
+          set_test_pattern_mode(1);
 
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.sensor_mode = IMGSENSOR_MODE_PREVIEW;

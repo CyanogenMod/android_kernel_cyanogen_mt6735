@@ -50,6 +50,8 @@ u8 OTPData[OTP_SIZE];
 extern int iReadData(unsigned int  ui4_offset, unsigned int  ui4_length, unsigned char * pinputdata);
 */
 
+int s5k_otp = 0;
+static kal_uint32 set_test_pattern_mode(kal_bool enable);
  //vivo zcw++ OTP
 extern kal_bool otp_update(void);
 extern kal_bool otp_wb_update(void);
@@ -374,6 +376,9 @@ static void write_shutter(kal_uint16 shutter)
     write_cmos_sensor(0x0202, shutter);
     //write_cmos_sensor_8(0x0104,0x00);
 	LOG_INF("Exit! shutter =%d, framelength =%d\n", shutter,imgsensor.frame_length);
+	printk("******************************************\n");
+	printk("Exit! shutter =%d, framelength =%d\n", shutter,imgsensor.frame_length);
+	printk("******************************************\n");
 }	/*	write_shutter  */
 
 
@@ -2798,7 +2803,7 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 				printk("--->>>read LSC_addr in get_imgsensor_id func\n");
 				/*iReadData(LSC_addr,OTP_SIZE,OTPData); 
 				otp_flag = 1;*/
-				otp_update();
+				s5k_otp = otp_update();
                 LOG_INF("i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id,*sensor_id);  
                 printk("s5k3m2 i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id,*sensor_id);    
                 return ERROR_NONE;
@@ -2937,6 +2942,8 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 					  MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
 	LOG_INF("E\n");
+        if(s5k_otp == 0)
+        set_test_pattern_mode(1);
 
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.sensor_mode = IMGSENSOR_MODE_PREVIEW;

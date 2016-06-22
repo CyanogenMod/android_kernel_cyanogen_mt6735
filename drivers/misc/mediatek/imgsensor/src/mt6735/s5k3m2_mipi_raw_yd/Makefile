@@ -3,6 +3,6 @@
 #endif
 
 obj-y += s5k3m2mipi_Sensor.o
-obj-y += s5k3m2mipi_otp.o
+#obj-y += s5k3m2mipi_otp.o
 
 

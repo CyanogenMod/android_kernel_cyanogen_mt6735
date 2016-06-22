@@ -159,6 +159,19 @@
 	};
 };
 
+&aeon_pins_flash_enm0_gpio {
+	pins_cmd_dat {
+		pins = <PINMUX_GPIO68__FUNC_GPIO68>;
+	};
+};
+
+&aeon_pins_flash_enm1_gpio {
+	pins_cmd_dat {
+		pins = <PINMUX_GPIO68__FUNC_GPIO68>;
+	};
+};
+
+
 &alsps {
 	pinctrl-names = "pin_default", "pin_cfg";
 	pinctrl-0 = <&alsps_intpin_default>;
