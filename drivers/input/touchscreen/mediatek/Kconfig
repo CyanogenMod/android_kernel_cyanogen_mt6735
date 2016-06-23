@@ -239,4 +239,16 @@ config TOUCHSCREEN_AEON_FT5X0X_8630
 	  module will be called.
 source "drivers/input/touchscreen/mediatek/aeon_ft5x0x_hd720_lide_8630/Kconfig"
 
+config TOUCHSCREEN_AEON_MSTAR_8630
+	bool "aeon_mstar_8630_v3.14 for Eastaeon package"
+	default n
+	help
+	  Say Y here if you have mstar touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
+
 endif

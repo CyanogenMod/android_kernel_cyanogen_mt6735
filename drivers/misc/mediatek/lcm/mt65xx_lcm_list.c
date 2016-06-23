@@ -67,6 +67,10 @@ LCM_DRIVER *lcm_driver_list[] = {
 	&aeon_hx8394_hd720_dsi_vdo_8630_lead_lcm_drv,
 #endif
 
+#if defined(AEON_ILI9881C_HD720_DSI_VDO_8630_LEAD)
+	&aeon_ili9881c_hd720_dsi_vdo_8630_lead_lcm_drv,
+#endif
+
 /* ================================eastaeon==================================== */
 
 #endif

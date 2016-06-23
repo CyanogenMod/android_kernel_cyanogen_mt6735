@@ -94,7 +94,7 @@
 #define   FTS_REG_ID			0xA3
 #define   FTS_REG_FW_VENDOR_ID 0xA8
 
-#define FTS_PACKET_LENGTH      	128
+#define FTS_PACKET_LENGTH      	32
 #define FTS_SETTING_BUF_LEN      	128
 
 #define FTS_UPGRADE_LOOP		30

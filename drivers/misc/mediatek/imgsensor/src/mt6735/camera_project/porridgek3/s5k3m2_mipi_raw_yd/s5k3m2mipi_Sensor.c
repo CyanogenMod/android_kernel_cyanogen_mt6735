@@ -48,6 +48,8 @@ extern kal_bool otp_update(void);
 extern kal_bool otp_wb_update(void);
 extern kal_bool otp_lsc_update(void);
  //vivo zcw-- 
+int s5k_otp = 0;
+static kal_uint32 set_test_pattern_mode(kal_bool enable);
 
 static DEFINE_SPINLOCK(imgsensor_drv_lock);
 static imgsensor_info_struct imgsensor_info = { 
@@ -2794,7 +2796,7 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 			//*sensor_id = imgsensor_info.sensor_id;
             if (*sensor_id == imgsensor_info.sensor_id) { 
                 printk("--->>>read LSC_addr in get_imgsensor_id func\n");
-                otp_update();
+                s5k_otp = otp_update();
                 LOG_INF("i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id,*sensor_id);  
                 printk("s5k3m2 i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id,*sensor_id);    
                 return ERROR_NONE;
@@ -2933,6 +2935,8 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 					  MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
 	LOG_INF("E\n");
+        if(s5k_otp == 0)
+          set_test_pattern_mode(1);
 
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.sensor_mode = IMGSENSOR_MODE_PREVIEW;

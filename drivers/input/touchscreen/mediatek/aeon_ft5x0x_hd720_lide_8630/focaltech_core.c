@@ -968,13 +968,20 @@ static int tpd_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	if (retval != 0)
 		TPD_DMESG("Failed to enable reg-vgp6: %d\n", retval);
 
-	/* set INT mode */
-
         tpd_gpio_output(GTP_RST_PORT, 0);
 	msleep(20);
 	tpd_gpio_output(GTP_RST_PORT, 1);
 	msleep(50);
 
+        if ((i2c_smbus_read_i2c_block_data(i2c_client, 0xA3, 1, &data)) < 0) {
+		TPD_DMESG("I2C transfer error, line: %d\n", __LINE__);
+		tpd_load_status = 0;
+		return -1;
+        }else{
+		TPD_DMESG("I2C transfer no error,data=0x%x, line: %d\n", data, __LINE__);
+        }
+
+	/* set INT mode */
 	tpd_gpio_as_int(tpd_int_gpio_number);
 
 	tpd_irq_registration();

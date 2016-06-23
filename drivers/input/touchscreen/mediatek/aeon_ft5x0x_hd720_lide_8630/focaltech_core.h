@@ -145,7 +145,7 @@
 //#define TPD_RES_Y                					1280//800
 #define TPD_CALIBRATION_MATRIX  			{962,0,0,0,1600,0,0,0};
 #define FT_PROXIMITY_ENABLE				0
-//#define TPD_AUTO_UPGRADE
+#define TPD_AUTO_UPGRADE
 //#define TPD_HAVE_CALIBRATION
 //#define TPD_HAVE_TREMBLE_ELIMINATION
 //#define TPD_CLOSE_POWER_IN_SLEEP
@@ -277,7 +277,7 @@ struct fts_ts_data {
 #define MTK_EN 									1
 #define FTS_APK_DEBUG
 #define SYSFS_DEBUG
-//#define TPD_AUTO_UPGRADE
+#define TPD_AUTO_UPGRADE
                                 
 #define FT_TP									0
 //#define CONFIG_TOUCHPANEL_PROXIMITY_SENSOR

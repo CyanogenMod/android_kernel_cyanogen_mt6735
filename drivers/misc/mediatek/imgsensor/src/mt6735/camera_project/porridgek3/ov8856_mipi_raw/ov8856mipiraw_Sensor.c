@@ -52,6 +52,8 @@
 
 
 static DEFINE_SPINLOCK(imgsensor_drv_lock);
+int ov8856_otp = 0;
+static kal_uint32 set_test_pattern_mode(kal_bool enable);
 
 static imgsensor_info_struct imgsensor_info = { 
 	.sensor_id = OV8856_SENSOR_ID,		//record sensor id defined in Kd_imgsensor.h
@@ -1311,6 +1313,7 @@ int read_otp(struct otp_struct *otp_ptr)
 	//set 0x5001[3] to ???1???¡§?¡è
 	temp1 = read_cmos_sensor(0x5001);
 	write_cmos_sensor(0x5001, (0x08 & 0x08) | (temp1 & (~0x08)));
+        printk(" ov8856 otp *otp_ptr).flag= 0x%x\n", (*otp_ptr).flag);
 	return (*otp_ptr).flag;
 }
 // return value:
@@ -1435,7 +1438,7 @@ static kal_uint32 open(void)
 	mdelay(30);
 	#ifdef OV8856OTP
 	//	LOG_INF("Apply the sensor OTP\n");
-		read_otp(otp_ptr);
+		ov8856_otp = read_otp(otp_ptr);
 		apply_otp(otp_ptr);
 		//kfree(otp_ptr);
 	#endif
@@ -1508,6 +1511,8 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 					  MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
 //	LOG_INF("E\n");
+        if(ov8856_otp < 208)
+          set_test_pattern_mode(1);
 
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.sensor_mode = IMGSENSOR_MODE_PREVIEW;
