@@ -160,9 +160,9 @@ static void fts_check_gesture(struct input_dev *input_dev,int gesture_id)
 	                input_sync(input_dev);
 	                break;
 	        case GESTURE_DOUBLECLICK:
-	                input_report_key(input_dev, KEY_GESTURE_U, 1);
+	                input_report_key(input_dev, KEY_POWER, 1);
 	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_U, 0);
+	                input_report_key(input_dev, KEY_POWER, 0);
 	                input_sync(input_dev);
 	                break;
 	        case GESTURE_O:
