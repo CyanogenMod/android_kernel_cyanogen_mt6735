@@ -100,3 +100,9 @@ config MTK_MD2_SBP_CUSTOM_VALUE
 	  Disable MD2 SBP(Single Binary Platform) feature or not.
 	  Defined: enable MD2 SBP feature.
 
+config MODEM_FIRMWARE_CIP_PATH
+	string "MODEM_FIRMWARE_CIP_PATH"
+	default ""
+	help
+	  Defines a custom path for modem firmware.
+
