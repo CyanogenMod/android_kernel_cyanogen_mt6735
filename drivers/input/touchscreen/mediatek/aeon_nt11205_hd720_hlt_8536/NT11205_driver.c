@@ -117,6 +117,7 @@ extern struct tpd_device *tpd;
 static int tpd_flag = 0;
 static int tpd_halt = 0;
 
+unsigned int nt_gesture = 0;
 static struct task_struct *thread = NULL;
 
 #if BOOT_UPDATE_FIRMWARE
@@ -3089,7 +3090,9 @@ static void nvt_tp_version_proc()
 static int __init tpd_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	int ret = -1;
-	//int retry;
+#if WAKEUP_GESTURE
+	int retry;
+#endif
 	TPD_DMESG("MediaTek touch panel i2c probe\n");
     TPD_DMESG("probe handle -- novatek\n");
 	printk("[max--%s@%d]:   \n",__func__,__LINE__);
@@ -3254,6 +3257,23 @@ static int __init tpd_i2c_remove(struct i2c_client *client)
     return TPD_OK;
 }
 
+static ssize_t enable_gesture_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+          return snprintf(buf, PAGE_SIZE, "%u\n", nt_gesture);
+}
+
+static ssize_t enable_gesture_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+          if (sscanf(buf, "%u", &nt_gesture) != 1)
+            return -EINVAL;
+          nt_gesture = nt_gesture > 0 ? 1 : 0;
+          return count;
+}
+static DEVICE_ATTR(enable_gesture, 0664, enable_gesture_show, enable_gesture_store);
+
+static struct device_attribute *nt11205_attrs[] = {
+    &dev_attr_enable_gesture,
+};
 int tpd_local_init(void)
 {
 	//TPD_DMESG("tpd_local_init  start 0\n");
@@ -3348,6 +3368,7 @@ void tpd_suspend(struct device *h)
 #endif
 
 #if WAKEUP_GESTURE
+        if(nt_gesture == 1){
 	bTouchIsAwake = 0;
 	TPD_DMESG("Enable touch wakeup gesture.\n");
 
@@ -3358,6 +3379,18 @@ void tpd_suspend(struct device *h)
 	buf[3]=0xA6;
 	//i2c_smbus_write_i2c_block_data(i2c_client, buf[0], 3, &buf[1]);
 	CTP_I2C_WRITE(ts->client, I2C_FW_Address, buf, 4);
+        }else{
+        disable_irq(nt_touch_irq);
+
+	//---write i2c command to enter "deep sleep mode"---
+	buf[0]=0x88;
+	buf[1]=0x55;
+	buf[2]=0xAA;
+	buf[3]=0xA5;
+	//i2c_smbus_write_i2c_block_data(i2c_client, buf[0], 3, &buf[1]);
+	CTP_I2C_WRITE(ts->client, I2C_FW_Address, buf, 4);
+
+        }
 #else
 	//mt_eint_mask(CUST_EINT_TOUCH_PANEL_NUM);
 	disable_irq(nt_touch_irq);
@@ -3389,8 +3422,13 @@ void tpd_resume(struct device *h)
 	tpd_halt = 0;
 
 #if WAKEUP_GESTURE
+        if(nt_gesture == 1){
 	nvt_hw_reset();
 	bTouchIsAwake = 1;
+        }else{
+	nvt_hw_reset();
+	enable_irq(nt_touch_irq);
+        }
 #else
 	nvt_hw_reset();
 	//mt_eint_unmask(CUST_EINT_TOUCH_PANEL_NUM); 
@@ -3418,6 +3456,10 @@ static struct tpd_driver_t tpd_device_driver =
 #else
 	.tpd_have_button = 0,
 #endif
+        .attrs = {
+             .attr = nt11205_attrs,
+             .num  = ARRAY_SIZE(nt11205_attrs),
+        },
 };
 
 /* called when loaded into kernel */

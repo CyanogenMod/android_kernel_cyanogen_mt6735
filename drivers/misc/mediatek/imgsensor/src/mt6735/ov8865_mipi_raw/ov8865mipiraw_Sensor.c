@@ -1792,7 +1792,10 @@ static int read_otp(struct otp_struct *otp_ptr)
 	//set 0x5002 to 0x08
 	write_cmos_sensor(0x5002, 0x08); // enable OTP_DPC
 	printk("--->>>[OV8865OTP] (*otp_ptr).flag = 0x%x \n", (*otp_ptr).flag);
-	return (*otp_ptr).flag;
+        if((((((*otp_ptr).flag)>>4) & 0x1) == 1) && (((((*otp_ptr).flag)>>6) & 0x1) == 1) && (((((*otp_ptr).flag)>>7) & 0x1) == 1)){
+           return 1;
+        }
+	return 0;
 }
 
 // return value:
@@ -1920,6 +1923,9 @@ static kal_uint32 open(void)
 	apply_otp(&ov8865_otp_data);
 //lijin end
 
+        if(ov8865_otp == 0)
+          set_test_pattern_mode(1);
+
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.autoflicker_en= KAL_FALSE;
 	imgsensor.sensor_mode = IMGSENSOR_MODE_INIT;
@@ -1989,9 +1995,7 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 {
 	LOG_INF("E\n");
         
-        if(ov8865_otp < 208)
-          set_test_pattern_mode(1);
-
+        
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.sensor_mode = IMGSENSOR_MODE_PREVIEW;
 	imgsensor.pclk = imgsensor_info.pre.pclk;

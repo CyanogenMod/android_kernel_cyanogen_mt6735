@@ -2875,6 +2875,9 @@ static kal_uint32 open(void)
 	/* initail sequence write in  */
 	sensor_init();
 
+        if(s5k_otp == 0)
+          set_test_pattern_mode(1);
+
 	spin_lock(&imgsensor_drv_lock);
 
 	imgsensor.autoflicker_en= KAL_FALSE;
@@ -2942,9 +2945,7 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 					  MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
 	LOG_INF("E\n");
-        if(s5k_otp == 0)
-        set_test_pattern_mode(1);
-
+        
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.sensor_mode = IMGSENSOR_MODE_PREVIEW;
 	imgsensor.pclk = imgsensor_info.pre.pclk;
