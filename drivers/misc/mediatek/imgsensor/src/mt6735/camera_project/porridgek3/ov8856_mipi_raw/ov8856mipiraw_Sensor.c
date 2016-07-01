@@ -1314,7 +1314,10 @@ int read_otp(struct otp_struct *otp_ptr)
 	temp1 = read_cmos_sensor(0x5001);
 	write_cmos_sensor(0x5001, (0x08 & 0x08) | (temp1 & (~0x08)));
         printk(" ov8856 otp *otp_ptr).flag= 0x%x\n", (*otp_ptr).flag);
-	return (*otp_ptr).flag;
+        if((((((*otp_ptr).flag)>>4) & 0x1) == 1) && (((((*otp_ptr).flag)>>6) & 0x1) == 1) && (((((*otp_ptr).flag)>>7) & 0x1) == 1)){
+          return 1;
+        }
+	return 0;
 }
 // return value:
 // bit[7]: 0 no otp info, 1 valid otp info
@@ -1442,6 +1445,10 @@ static kal_uint32 open(void)
 		apply_otp(otp_ptr);
 		//kfree(otp_ptr);
 	#endif
+
+        if(ov8856_otp == 0)
+          set_test_pattern_mode(1);
+
 	spin_lock(&imgsensor_drv_lock);
 
 	imgsensor.autoflicker_en= KAL_FALSE;
@@ -1511,9 +1518,7 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 					  MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
 //	LOG_INF("E\n");
-        if(ov8856_otp < 208)
-          set_test_pattern_mode(1);
-
+        
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.sensor_mode = IMGSENSOR_MODE_PREVIEW;
 	imgsensor.pclk = imgsensor_info.pre.pclk;
