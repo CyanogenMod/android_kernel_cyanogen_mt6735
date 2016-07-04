@@ -174,6 +174,22 @@ PowerUp PowerOnList={
             },
         },
 	#endif
+    #if defined(OV8856_MIPI_RAW)
+		{SENSOR_DRVNAME_OV8856_MIPI_RAW,
+            {
+				{SensorId, SUB_SENSOR, 0},
+				{SensorMCLK, Mclk1, 0},
+				{RST,	Vol_Low,  0},
+				{PDN,	Vol_Low,  0},
+				{AVDD,	Vol_2800, 10},
+				{DOVDD, Vol_1800, 10},
+				{DVDD,	Vol_1200, 10},
+				//{AFVDD, Vol_2800, 10},
+				{RST,	Vol_High, 10},
+				{PDN,	Vol_High, 10},
+            },
+        },
+	#endif
     #if defined(GC2755MIPI_RAW)
 		{SENSOR_DRVNAME_GC2755_MIPI_RAW,
             {

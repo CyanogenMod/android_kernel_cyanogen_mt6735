@@ -43,6 +43,7 @@
 #define PFX "OV8858"
 
 #define OV8858R2AOTP
+#define OV8858R1AOTP
 int ov8858_otp  = 0;
 //#define LOG_WRN(format, args...) xlog_printk(ANDROID_LOG_WARN ,PFX, "[%S] " format, __FUNCTION__, ##args)
 //#defineLOG_INF(format, args...) xlog_printk(ANDROID_LOG_INFO ,PFX, "[%s] " format, __FUNCTION__, ##args)
@@ -1486,9 +1487,274 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 	return ERROR_NONE;
 }
 
+#ifdef OV8858R1AOTP
+struct otp_struct_1a {
+	int flag; // bit[7]: info, bit[6]:wb, bit[5]:vcm, bit[4]:lenc
+	int module_integrator_id;
+	int lens_id;
+	int production_year;
+	int production_month;
+	int production_day;
+	int rg_ratio;
+	int bg_ratio;
+int light_rg;
+int light_bg;
+int lenc[110];
+	int VCM_start;
+	int VCM_end;
+	int VCM_dir;
+};
+#if 0
+struct otp_struct otp_struct_obj = {
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+{0},
+0,
+0,
+0,
+0,
+};
+otp_ptr = &otp_struct_obj;
+#endif
+int read_otp_1a(struct otp_struct_1a *otp_ptr)
+{
+	int otp_flag, addr, temp, i;
+	int temp1;
+	temp1 = read_cmos_sensor(0x5002);
+	write_cmos_sensor(0x5002, (0x00 & 0x08) | (temp1 & (~0x08)));
+	write_cmos_sensor(0x3d84, 0xC0);
+	write_cmos_sensor(0x3d88, 0x70); // OTP start address
+	write_cmos_sensor(0x3d89, 0x10);
+	write_cmos_sensor(0x3d8A, 0x71); // OTP end address
+	write_cmos_sensor(0x3d8B, 0x84);
+	write_cmos_sensor(0x3d81, 0x01); // load otp into buffer
+	mdelay(10);
+	otp_flag = read_cmos_sensor(0x7010);
+	addr = 0;
+	if((otp_flag & 0xc0) == 0x40) {
+		addr = 0x7011; // base address of info group 1
+	}
+	else if((otp_flag & 0x30) == 0x10) {
+		addr = 0x7016; // base address of info group 2
+	}
+	else if((otp_flag & 0x0c) == 0x04)
+	{
+		addr = 0x701b; // base address of info group 3
+	}
+	if(addr != 0) {
+		(*otp_ptr).flag = 0x80; // valid info and AWB in OTP
+		(*otp_ptr).module_integrator_id = read_cmos_sensor(addr);
+		(*otp_ptr).lens_id = read_cmos_sensor( addr + 1);
+		(*otp_ptr).production_year = read_cmos_sensor( addr + 2);
+		(*otp_ptr).production_month = read_cmos_sensor( addr + 3);
+		(*otp_ptr).production_day = read_cmos_sensor(addr + 4);
+	}
+	else {
+		(*otp_ptr).flag = 0x00; // not info and AWB in OTP
+		(*otp_ptr).module_integrator_id = 0;
+		(*otp_ptr).lens_id = 0;
+		(*otp_ptr).production_year = 0;
+		(*otp_ptr).production_month = 0;
+		(*otp_ptr).production_day = 0;
+	}
+	otp_flag = read_cmos_sensor(0x7020);
+	addr = 0;
+	if((otp_flag & 0xc0) == 0x40)
+	{
+		addr = 0x7021; // base address of WB Calibration group 1
+	}
+	else if((otp_flag & 0x30) == 0x10)
+	{
+		addr = 0x7026; // base address of WB Calibration group 2
+	}
+	else if((otp_flag & 0x0c) == 0x04)
+	{
+		addr = 0x702b; // base address of WB Calibration group 3
+	}
+	if(addr != 0)
+	{
+		(*otp_ptr).flag |= 0x40;
+		temp = read_cmos_sensor(addr + 4);
+		(*otp_ptr).rg_ratio = (read_cmos_sensor(addr)<<2) + ((temp>>6) & 0x03);
+		(*otp_ptr).bg_ratio = (read_cmos_sensor(addr + 1)<<2) + ((temp>>4) & 0x03);
+		(*otp_ptr).light_rg = (read_cmos_sensor(addr + 2)<<2) + ((temp>>2) & 0x03);
+		(*otp_ptr).light_bg = (read_cmos_sensor(addr + 3)<<2) + (temp & 0x03);
+	}
+	else
+	{
+		(*otp_ptr).rg_ratio = 0;
+		(*otp_ptr).bg_ratio = 0;
+		(*otp_ptr).light_rg = 0;
+		(*otp_ptr).light_bg = 0;
+	}
+		printk("--->>>[OV8858OTP] \n \
+							    flag = 0x%x\n \
+								module_integrator_id = 0x%x\n \
+								lens_id = 0x%x\n \
+								production_year = 0x%x\n \
+								production_month = 0x%x\n \
+								production_day = 0x%x\n \
+								rg_ratio = 0x%x\n \
+								bg_ratio = 0x%x\n \
+								light_rg = 0x%x\n \
+								light_bg = 0x%x\n" ,\
+								(*otp_ptr).flag, \
+								(*otp_ptr).module_integrator_id, \
+								(*otp_ptr).lens_id, \
+								(*otp_ptr).production_year, \
+								(*otp_ptr).production_month, \
+								(*otp_ptr).production_day, \
+								(*otp_ptr).rg_ratio, \
+								(*otp_ptr).bg_ratio, \
+								(*otp_ptr).light_rg, \
+								(*otp_ptr).light_bg);
+	otp_flag = read_cmos_sensor(0x7030);
+	addr = 0;
+	if((otp_flag & 0xc0) == 0x40) {
+		addr = 0x7031; // base address of VCM Calibration group 1
+	}
+	else if((otp_flag & 0x30) == 0x10) {
+		addr = 0x7034; // base address of VCM Calibration group 2
+	}
+	else if((otp_flag & 0x0c) == 0x04)
+	{
+		addr = 0x7037; // base address of VCM Calibration group 3
+	}
+	if(addr != 0) {
+		(*otp_ptr).flag |= 0x20;
+		temp = read_cmos_sensor(addr + 2);
+		(* otp_ptr).VCM_start = (read_cmos_sensor(addr)<<2) | ((temp>>6) & 0x03);
+		(* otp_ptr).VCM_end = (read_cmos_sensor(addr + 1) << 2) | ((temp>>4) & 0x03);
+		(* otp_ptr).VCM_dir = (temp>>2) & 0x03;
+	}
+	else {
+		(* otp_ptr).VCM_start = 0;
+		(* otp_ptr).VCM_end = 0;
+		(* otp_ptr).VCM_dir = 0;
+	}
+	printk("--->>>[OV8858OTP] \n \
+								VCM_start = 0x%x\n \
+								VCM_end = 0x%x\n \
+								VCM_dir = 0x%x\n", \
+								(* otp_ptr).VCM_start, \
+								(* otp_ptr).VCM_end, \
+								(* otp_ptr).VCM_dir);
+	otp_flag = read_cmos_sensor(0x703a);
+	addr = 0;
+	if((otp_flag & 0xc0) == 0x40) {
+		addr = 0x703b; // base address of Lenc Calibration group 1
+	}
+	else if((otp_flag & 0x30) == 0x10) {
+		addr = 0x70a9; // base address of Lenc Calibration group 2
+	}
+	else if((otp_flag & 0x0c) == 0x04)
+	{
+		addr = 0x7117; // base address of Lenc Calibration group 3
+	}
+	if(addr != 0)
+	{
+			(*otp_ptr).flag |= 0x10;	
+		for(i=0; i<110; i++)
+		{
+			(* otp_ptr).lenc[i]=read_cmos_sensor(addr + i);
+			printk("--->>>[OV8858OTP] lenc[%d] = %d\n", i, (* otp_ptr).lenc[i]);
+		}
+	}
+	else
+	{
+		for(i=0; i<110; i++)
+		{
+			(* otp_ptr).lenc[i]=0;
+		}
+	}
+	for(i=0x7010;i<=0x7184;i++) {
+		write_cmos_sensor(i,0); // clear OTP buffer, recommended use continuous write to accelarate
+	}
+	temp1 = read_cmos_sensor(0x5002);
+	write_cmos_sensor(0x5002, (0x08 & 0x08) | (temp1 & (~0x08)));
+	printk("--->>>[OV8858OTP  (*otp_ptr).flag=%d\n", (*otp_ptr).flag);
+	        if((((((*otp_ptr).flag)>>4) & 0x1) == 1) && (((((*otp_ptr).flag)>>6) & 0x1) == 1) && (((((*otp_ptr).flag)>>7) & 0x1) == 1)){
+           return 1;
+        }
+	return 0;
+}
+int apply_otp_1a(struct otp_struct_1a *otp_ptr)
+{
+	int RG_Ratio_Typical = 0x127, BG_Ratio_Typical = 0x13e;
+	int rg, bg, R_gain, G_gain, B_gain, Base_gain,temp, i;
+	if ((*otp_ptr).flag & 0x40)
+	{
+		if((*otp_ptr).light_rg==0)
+		{
+			rg = (*otp_ptr).rg_ratio;
+		}
+		else
+		{
+			rg = (*otp_ptr).rg_ratio * ((*otp_ptr).light_rg + 512) / 1024;
+		}
+		if((*otp_ptr).light_bg==0)
+		{
+			bg = (*otp_ptr) . bg_ratio;
+		}
+		else
+		{
+			bg = (*otp_ptr) . bg_ratio * ((*otp_ptr).light_bg + 512) / 1024;
+		}
+		R_gain = (RG_Ratio_Typical*1000) / rg;
+		B_gain = (BG_Ratio_Typical*1000) / bg;
+		G_gain = 1000;
+		if (R_gain < 1000 || B_gain < 1000)
+		{
+			if (R_gain < B_gain)
+				Base_gain = R_gain;
+			else
+				Base_gain = B_gain;
+		}
+		else
+		{
+			Base_gain = G_gain;
+		}
+		R_gain = 0x400 * R_gain / (Base_gain);
+		B_gain = 0x400 * B_gain / (Base_gain);
+		G_gain = 0x400 * G_gain / (Base_gain);
+		if (R_gain>0x400)
+		{
+			write_cmos_sensor(0x5032, R_gain>>8);
+			write_cmos_sensor(0x5033, R_gain & 0x00ff);
+		}
+		if (G_gain>0x400)
+		{
+			write_cmos_sensor(0x5034, G_gain>>8);
+			write_cmos_sensor(0x5035, G_gain & 0x00ff);
+		}
+		if (B_gain>0x400)
+		{
+			write_cmos_sensor(0x5036, B_gain>>8);
+			write_cmos_sensor(0x5037, B_gain & 0x00ff);
+		}
+	}
+	if ((*otp_ptr).flag & 0x10)
+	{
+		temp = read_cmos_sensor(0x5000);
+		temp = 0x80 | temp;
+		write_cmos_sensor(0x5000, temp);
+		for(i=0; i<110; i++)
+		{
+			write_cmos_sensor(0x5800 + i, (*otp_ptr).lenc[i]);
+		}
+	}
+	return (*otp_ptr).flag;
+}
+#endif
 #ifdef OV8858R2AOTP
 
-struct otp_struct {
+struct otp_struct_2a {
 	int flag; // bit[7]: info, bit[6]:wb, bit[5]:vcm, bit[4]:lenc
 	int module_integrator_id;
 	int lens_id;
@@ -1532,7 +1798,7 @@ otp_ptr = &otp_struct_obj;
 // bit[6]: 0 no otp wb, 1 valib otp wb
 // bit[5]: 0 no otp vcm, 1 valid otp vcm
 // bit[4]: 0 no otp lenc/invalid otp lenc, 1 valid otp lenc
-int read_otp(struct otp_struct *otp_ptr)
+int read_otp_2a(struct otp_struct_2a *otp_ptr)
 {
 	int otp_flag, addr, temp, i;
 	int checksum2=0;
@@ -1668,7 +1934,7 @@ int read_otp(struct otp_struct *otp_ptr)
 // bit[5]: 0 no otp vcm, 1 valid otp vcm
 // bit[4]: 0 no otp lenc, 1 valid otp lenc
 
-int apply_otp(struct otp_struct *otp_ptr)
+int apply_otp_2a(struct otp_struct_2a *otp_ptr)
 {
 	int RG_Ratio_Typical = 0x127, BG_Ratio_Typical = 0x13e;
 	int rg, bg, R_gain, G_gain, B_gain, Base_gain, temp, i;
@@ -1743,8 +2009,11 @@ static kal_uint32 open(void)
 	kal_uint8 i = 0;
 	kal_uint8 retry = 2;
 	kal_uint16 sensor_id = 0; 
+	#if defined(OV8858R1AOTP)
+	struct otp_struct_1a *otp_ptr_1a = (struct otp_struct_1a *)kzalloc(sizeof(struct otp_struct_1a), GFP_KERNEL);
+	#endif
 	#if defined(OV8858R2AOTP)
-	struct otp_struct *otp_ptr = (struct otp_struct *)kzalloc(sizeof(struct otp_struct), GFP_KERNEL);
+	struct otp_struct_2a *otp_ptr_2a = (struct otp_struct_2a *)kzalloc(sizeof(struct otp_struct_2a), GFP_KERNEL);
 	#endif
 	LOG_INF("PLATFORM:MT6595,MIPI 4LANE\n");
 	//LOG_INF("preview 1280*960@30fps,864Mbps/lane; video 1280*960@30fps,864Mbps/lane; capture 5M@30fps,864Mbps/lane\n");
@@ -1775,14 +2044,28 @@ static kal_uint32 open(void)
 	sensor_init();
 
 	mdelay(10);
+	if(ov8858version == OV8858R1A)
+	{
+		#ifdef OV8858R1AOTP
+			LOG_INF("Apply the sensor OTP\n");
+			ov8858_otp = read_otp_1a(otp_ptr_1a);
+			apply_otp_1a(otp_ptr_1a);
+			kfree(otp_ptr_1a);
+			kfree(otp_ptr_2a);
+		#endif
+     }  
+	 else
+	 {
 	#ifdef OV8858R2AOTP
 		LOG_INF("Apply the sensor OTP\n");
 		//struct otp_struct *otp_ptr = (struct otp_struct *)kzalloc(sizeof(struct otp_struct), GFP_KERNEL);
-		ov8858_otp = read_otp(otp_ptr);
-		apply_otp(otp_ptr);
-		kfree(otp_ptr);
+			ov8858_otp = read_otp_2a(otp_ptr_2a);
+			apply_otp_2a(otp_ptr_2a);
+			kfree(otp_ptr_2a);
+			kfree(otp_ptr_1a);
 	#endif
-        if (ov8858_otp == 0)
+        }
+		if (ov8858_otp == 0)
             set_test_pattern_mode(1);
 
        
