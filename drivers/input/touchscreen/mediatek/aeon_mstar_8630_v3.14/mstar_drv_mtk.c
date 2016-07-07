@@ -94,7 +94,7 @@ extern int g_TpVirtualKeyDimLocal[][4];
 
 extern struct tpd_device *tpd;
 
-unsigned int ms_gesture = 0;
+unsigned int msg_gesture = 0;
 /*=============================================================*/
 // LOCAL VARIABLE DEFINITION
 /*=============================================================*/
@@ -190,7 +190,7 @@ MODULE_DEVICE_TABLE(i2c, tpd_device_id);
 
 #ifdef CONFIG_PLATFORM_USE_ANDROID_SDK_6_UPWARD
 const struct of_device_id touch_dt_match_table[] = {
-    { .compatible = "mediatek,mstar_touch",},
+    { .compatible = "mediatek,mstar_touch"},
     {},
 };
 
@@ -204,15 +204,15 @@ static DEVICE_ATTR(configid, 0444, show_firmware_id, NULL);
 
 static ssize_t enable_gesture_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-	return snprintf(buf, PAGE_SIZE, "%u\n", ms_gesture);
+	return snprintf(buf, PAGE_SIZE, "%u\n", msg_gesture);
 }
 
 static ssize_t enable_gesture_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
-	if (sscanf(buf, "%u", &ms_gesture) != 1)
+	if (sscanf(buf, "%u", &msg_gesture) != 1)
 		return -EINVAL;
 
-	ms_gesture = ms_gesture > 0 ? 1 : 0;
+	msg_gesture = msg_gesture > 0 ? 1 : 0;
 	return count;
 }
 static DEVICE_ATTR(enable_gesture, 0664, enable_gesture_show, enable_gesture_store);
@@ -293,7 +293,7 @@ static void tpd_resume(struct early_suspend *h)
 {
     TPD_DMESG("TPD wake up\n");
     
-    MsDrvInterfaceTouchDeviceResume(h);
+    MsDrvInterfaceTouchDeviceResume(h, msg_gesture);
     
     TPD_DMESG("TPD wake up done\n");
 }
@@ -306,7 +306,7 @@ static void tpd_suspend(struct early_suspend *h)
 {
     TPD_DMESG("TPD enter sleep\n");
 
-    MsDrvInterfaceTouchDeviceSuspend(h);
+    MsDrvInterfaceTouchDeviceSuspend(h, msg_gesture);
 
     TPD_DMESG("TPD enter sleep done\n");
 } 

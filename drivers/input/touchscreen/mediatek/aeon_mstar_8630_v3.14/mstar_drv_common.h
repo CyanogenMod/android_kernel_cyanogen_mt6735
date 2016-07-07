@@ -162,7 +162,7 @@
  * The below compile option is used to enable gesture wakeup.
  * By default, this compile option is disabled.
  */
-//#define CONFIG_ENABLE_GESTURE_WAKEUP
+#define CONFIG_ENABLE_GESTURE_WAKEUP
 
 // ------------------- #ifdef CONFIG_ENABLE_GESTURE_WAKEUP ------------------- //
 #ifdef CONFIG_ENABLE_GESTURE_WAKEUP

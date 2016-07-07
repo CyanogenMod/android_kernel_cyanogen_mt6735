@@ -861,11 +861,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
                     
                     DBG(&g_I2cClient->dev, "Light up screen by UP_DIRECT gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, KEY_UP, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_UP, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_UP, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_UP, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;		
                 case 0x61:
@@ -873,11 +873,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by DOWN_DIRECT gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, KEY_DOWN, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_DOWN, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_DOWN, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_DOWN, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;		
                 case 0x62:
@@ -885,11 +885,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by LEFT_DIRECT gesture wakeup.\n");
 
-//                  input_report_key(g_InputDevice, KEY_LEFT, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                  input_report_key(g_InputDevice, KEY_LEFT, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_LEFT, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_LEFT, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;		
                 case 0x63:
@@ -897,11 +897,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by RIGHT_DIRECT gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, KEY_RIGHT, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_RIGHT, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_RIGHT, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_RIGHT, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;		
                 case 0x64:
@@ -909,11 +909,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by m_CHARACTER gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, KEY_M, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_M, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_M, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_M, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;		
                 case 0x65:
@@ -921,11 +921,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by W_CHARACTER gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, KEY_W, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_W, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_W, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_W, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;		
                 case 0x66:
@@ -933,11 +933,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by C_CHARACTER gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, KEY_C, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_C, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_C, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_C, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;
                 case 0x67:
@@ -945,11 +945,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by e_CHARACTER gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, KEY_E, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_E, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_E, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_E, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;
                 case 0x68:
@@ -957,11 +957,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by V_CHARACTER gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, KEY_V, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_V, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_V, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_V, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;
                 case 0x69:
@@ -969,11 +969,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by O_CHARACTER gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, KEY_O, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_O, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_O, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_O, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;
                 case 0x6A:
@@ -981,11 +981,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by S_CHARACTER gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, KEY_S, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_S, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_S, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_S, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;
                 case 0x6B:
@@ -993,11 +993,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by Z_CHARACTER gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, KEY_Z, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_Z, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, KEY_Z, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_Z, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;
                 case 0x6C:
@@ -1005,11 +1005,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by GESTURE_WAKEUP_MODE_RESERVE1_FLAG gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, RESERVER1, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_RESERVED, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, RESERVER1, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_RESERVED, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;
                 case 0x6D:
@@ -1017,11 +1017,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by GESTURE_WAKEUP_MODE_RESERVE2_FLAG gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, RESERVER2, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_RESERVED, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, RESERVER2, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_RESERVED, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;
                 case 0x6E:
@@ -1029,11 +1029,11 @@ static s32 _DrvFwCtrlSelfParsePacket(u8 *pPacket, u16 nLength, SelfTouchInfo_t *
 
                     DBG(&g_I2cClient->dev, "Light up screen by GESTURE_WAKEUP_MODE_RESERVE3_FLAG gesture wakeup.\n");
 
-//                    input_report_key(g_InputDevice, RESERVER3, 1);
-                    input_report_key(g_InputDevice, KEY_POWER, 1);
+                    input_report_key(g_InputDevice, KEY_RESERVED, 1);
+//                    input_report_key(g_InputDevice, KEY_POWER, 1);
                     input_sync(g_InputDevice);
-//                    input_report_key(g_InputDevice, RESERVER3, 0);
-                    input_report_key(g_InputDevice, KEY_POWER, 0);
+                    input_report_key(g_InputDevice, KEY_RESERVED, 0);
+//                    input_report_key(g_InputDevice, KEY_POWER, 0);
                     input_sync(g_InputDevice);
                     break;
 #ifdef CONFIG_SUPPORT_64_TYPES_GESTURE_WAKEUP_MODE

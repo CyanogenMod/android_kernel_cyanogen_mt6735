@@ -278,9 +278,9 @@ int MsDrvInterfaceTouchDeviceFbNotifierCallback(struct notifier_block *pSelf, un
 #else
 
 #ifdef CONFIG_PLATFORM_USE_ANDROID_SDK_6_UPWARD
-void MsDrvInterfaceTouchDeviceSuspend(struct device *pDevice)
+void MsDrvInterfaceTouchDeviceSuspend(struct device *pDevice, int msg_gesture)
 #else
-void MsDrvInterfaceTouchDeviceSuspend(struct early_suspend *pSuspend)
+void MsDrvInterfaceTouchDeviceSuspend(struct early_suspend *pSuspend, int msg_gesture)
 #endif //CONFIG_PLATFORM_USE_ANDROID_SDK_6_UPWARD
 {
     DBG(&g_I2cClient->dev, "*** %s() ***\n", __func__);
@@ -309,11 +309,13 @@ void MsDrvInterfaceTouchDeviceSuspend(struct early_suspend *pSuspend)
     if (g_HotKnotState != HOTKNOT_BEFORE_TRANS_STATE && g_HotKnotState != HOTKNOT_TRANS_STATE && g_HotKnotState != HOTKNOT_AFTER_TRANS_STATE)
 #endif //CONFIG_ENABLE_HOTKNOT
     {
+      if(msg_gesture == 1){
         if (g_GestureWakeupMode[0] != 0x00000000 || g_GestureWakeupMode[1] != 0x00000000)
         {
             DrvIcFwLyrOpenGestureWakeup(&g_GestureWakeupMode[0]);
             return;
         }
+      }
     }
 #endif //CONFIG_ENABLE_GESTURE_WAKEUP
 
@@ -343,9 +345,9 @@ void MsDrvInterfaceTouchDeviceSuspend(struct early_suspend *pSuspend)
 }
 
 #ifdef CONFIG_PLATFORM_USE_ANDROID_SDK_6_UPWARD
-void MsDrvInterfaceTouchDeviceResume(struct device *pDevice)
+void MsDrvInterfaceTouchDeviceResume(struct device *pDevice, int msg_gesture)
 #else
-void MsDrvInterfaceTouchDeviceResume(struct early_suspend *pSuspend)
+void MsDrvInterfaceTouchDeviceResume(struct early_suspend *pSuspend, int msg_gesture)
 #endif //CONFIG_PLATFORM_USE_ANDROID_SDK_6_UPWARD
 {
     DBG(&g_I2cClient->dev, "*** %s() ***\n", __func__);
@@ -369,6 +371,7 @@ void MsDrvInterfaceTouchDeviceResume(struct early_suspend *pSuspend)
     if (g_HotKnotState != HOTKNOT_BEFORE_TRANS_STATE && g_HotKnotState != HOTKNOT_TRANS_STATE && g_HotKnotState != HOTKNOT_AFTER_TRANS_STATE)
 #endif //CONFIG_ENABLE_HOTKNOT
     {
+      if(msg_gesture == 1){
 #ifdef CONFIG_ENABLE_GESTURE_DEBUG_MODE
         if (g_GestureDebugMode == 1)
         {
@@ -384,7 +387,9 @@ void MsDrvInterfaceTouchDeviceResume(struct early_suspend *pSuspend)
         {
             DrvPlatformLyrEnableFingerTouchReport(); 
         }
+      }
     }
+
 #ifdef CONFIG_ENABLE_HOTKNOT
     else    // Enable touch in hotknot transfer mode
     {
@@ -440,9 +445,11 @@ void MsDrvInterfaceTouchDeviceResume(struct early_suspend *pSuspend)
         DrvIcFwLyrRestoreFirmwareModeToLogDataMode(); // Mark this function call for avoiding device driver may spend longer time to resume from suspend state.
     } //IS_FIRMWARE_DATA_LOG_ENABLED
 
-#ifndef CONFIG_ENABLE_GESTURE_WAKEUP
-    DrvPlatformLyrEnableFingerTouchReport(); 
-#endif //CONFIG_ENABLE_GESTURE_WAKEUP
+//#ifndef CONFIG_ENABLE_GESTURE_WAKEUP
+    if(msg_gesture != 1){
+      DrvPlatformLyrEnableFingerTouchReport(); 
+    }
+//#endif //CONFIG_ENABLE_GESTURE_WAKEUP
 
 #ifdef CONFIG_ENABLE_ESD_PROTECTION
     g_IsEnableEsdCheck = 1;

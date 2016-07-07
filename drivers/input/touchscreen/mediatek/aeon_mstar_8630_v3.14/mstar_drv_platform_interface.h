@@ -43,11 +43,11 @@ extern s32 /*__devexit*/ MsDrvInterfaceTouchDeviceRemove(struct i2c_client *pCli
 extern int MsDrvInterfaceTouchDeviceFbNotifierCallback(struct notifier_block *pSelf, unsigned long nEvent, void *pData);
 #else
 #ifdef CONFIG_PLATFORM_USE_ANDROID_SDK_6_UPWARD
-extern void MsDrvInterfaceTouchDeviceResume(struct device *pDevice);
-extern void MsDrvInterfaceTouchDeviceSuspend(struct device *pDevice);
+extern void MsDrvInterfaceTouchDeviceResume(struct device *pDevice, int msg_gesture);
+extern void MsDrvInterfaceTouchDeviceSuspend(struct device *pDevice, int msg_gesture);
 #else
-extern void MsDrvInterfaceTouchDeviceResume(struct early_suspend *pSuspend);        
-extern void MsDrvInterfaceTouchDeviceSuspend(struct early_suspend *pSuspend);
+extern void MsDrvInterfaceTouchDeviceResume(struct early_suspend *pSuspend, int msg_gesture);        
+extern void MsDrvInterfaceTouchDeviceSuspend(struct early_suspend *pSuspend, int msg_gesture);
 #endif //CONFIG_PLATFORM_USE_ANDROID_SDK_6_UPWARD
 #endif //CONFIG_ENABLE_NOTIFIER_FB
 extern void MsDrvInterfaceTouchDeviceSetIicDataRate(struct i2c_client *pClient, u32 nIicDataRate);
