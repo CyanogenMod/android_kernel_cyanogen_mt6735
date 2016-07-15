@@ -12,6 +12,7 @@ extern LCM_DRIVER lcm_common_drv;
 extern LCM_DRIVER aeon_ili9881c_hd720_dsi_vdo_lide_8536_lcm_drv;	
 extern LCM_DRIVER aeon_ili9881c_hd720_dsi_vdo_lide_8536_D_lcm_drv;	
 extern LCM_DRIVER aeon_ili9881c_hd720_dsi_vdo_hlt_8536_25t_lcm_drv;	
+extern LCM_DRIVER aeon_ili9881c_hd720_dsi_vdo_txd_8536_lcm_drv;	
 extern LCM_DRIVER aeon_rm68200_hd720_dsi_vdo_lide_8536_lcm_drv;	
 extern LCM_DRIVER aeon_hx8394f_hd720_dsi_vdo_lide_8536_lcm_drv;	
 extern LCM_DRIVER aeon_hx8394f_hd720_dsi_vdo_hlt_8536_lcm_drv;	

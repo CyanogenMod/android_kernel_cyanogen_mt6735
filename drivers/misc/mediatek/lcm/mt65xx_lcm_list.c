@@ -35,6 +35,9 @@ LCM_DRIVER *lcm_driver_list[] = {
 #if defined(AEON_ILI9881C_HD720_DSI_VDO_HLT_8536_25T)
 	&aeon_ili9881c_hd720_dsi_vdo_hlt_8536_25t_lcm_drv,
 #endif
+#if defined(AEON_ILI9881C_HD720_DSI_VDO_TXD_8536)
+	&aeon_ili9881c_hd720_dsi_vdo_txd_8536_lcm_drv,
+#endif
 #if defined(AEON_RM68200_HD720_DSI_VDO_LIDE_8536)
 	&aeon_rm68200_hd720_dsi_vdo_lide_8536_lcm_drv,
 #endif

@@ -315,25 +315,25 @@ static int closeFlash(void)
 /* /}@@ */
 static int gLowPowerVbat = LOW_BATTERY_LEVEL_0;
 
-static void Lbat_protection_powerlimit_flash(LOW_BATTERY_LEVEL level)
-{
-	logI("Lbat_protection_powerlimit_flash %d (%d %d %d %d)\n", level, LOW_BATTERY_LEVEL_0,
-	     LOW_BATTERY_LEVEL_1, LOW_BATTERY_LEVEL_2, __LINE__);
-	logI("Lbat_protection_powerlimit_flash %d (%d %d %d %d)\n", level, LOW_BATTERY_LEVEL_0,
-	     LOW_BATTERY_LEVEL_1, LOW_BATTERY_LEVEL_2, __LINE__);
-	if (level == LOW_BATTERY_LEVEL_0) {
-		gLowPowerVbat = LOW_BATTERY_LEVEL_0;
-	} else if (level == LOW_BATTERY_LEVEL_1) {
-		closeFlash();
-		gLowPowerVbat = LOW_BATTERY_LEVEL_1;
+// static void Lbat_protection_powerlimit_flash(LOW_BATTERY_LEVEL level)
+// {
+	// logI("Lbat_protection_powerlimit_flash %d (%d %d %d %d)\n", level, LOW_BATTERY_LEVEL_0,
+	     // LOW_BATTERY_LEVEL_1, LOW_BATTERY_LEVEL_2, __LINE__);
+	// logI("Lbat_protection_powerlimit_flash %d (%d %d %d %d)\n", level, LOW_BATTERY_LEVEL_0,
+	     // LOW_BATTERY_LEVEL_1, LOW_BATTERY_LEVEL_2, __LINE__);
+	// if (level == LOW_BATTERY_LEVEL_0) {
+		// gLowPowerVbat = LOW_BATTERY_LEVEL_0;
+	// } else if (level == LOW_BATTERY_LEVEL_1) {
+		// closeFlash();
+		// gLowPowerVbat = LOW_BATTERY_LEVEL_1;
 
-	} else if (level == LOW_BATTERY_LEVEL_2) {
-		closeFlash();
-		gLowPowerVbat = LOW_BATTERY_LEVEL_2;
-	} else {
-		/* unlimit cpu and gpu */
-	}
-}
+	// } else if (level == LOW_BATTERY_LEVEL_2) {
+		// closeFlash();
+		// gLowPowerVbat = LOW_BATTERY_LEVEL_2;
+	// } else {
+		// /* unlimit cpu and gpu */
+	// }
+// }
 
 
 
@@ -816,7 +816,7 @@ static int __init flashlight_init(void)
 		return ret;
 	}
 
-	register_low_battery_notify(&Lbat_protection_powerlimit_flash, LOW_BATTERY_PRIO_FLASHLIGHT);
+	//register_low_battery_notify(&Lbat_protection_powerlimit_flash, LOW_BATTERY_PRIO_FLASHLIGHT);
 	register_battery_percent_notify(&bat_per_protection_powerlimit_flashlight,
 					BATTERY_PERCENT_PRIO_FLASHLIGHT);
 /* @@    register_battery_oc_notify(&bat_oc_protection_powerlimit, BATTERY_OC_PRIO_FLASHLIGHT); */

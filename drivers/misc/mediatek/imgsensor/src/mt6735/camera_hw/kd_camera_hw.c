@@ -123,6 +123,22 @@ PowerUp PowerOnList={
 	    },
     #endif
 
+    #if defined(S5K4H8_MIPI_RAW)
+	    {SENSOR_DRVNAME_S5K4H8_MIPI_RAW,
+		   {
+				{SensorId, SUB_SENSOR, 0},
+				{SensorMCLK, Mclk1, 0},
+				{RST, Vol_Low, 0},
+				{PDN, Vol_Low, 0},
+				{DVDD, Vol_1200, 10},
+				{AVDD, Vol_2800, 10},
+				{DOVDD, Vol_1800, 10},
+				{AFVDD, Vol_2800, 10},
+				{RST, Vol_High, 10},
+				{PDN, Vol_High, 10},
+		   },
+	    },
+    #endif
     #if defined(OV5670_MIPI_RAW)
         {SENSOR_DRVNAME_OV5670_MIPI_RAW,
             {

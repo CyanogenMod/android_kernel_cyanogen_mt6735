@@ -1121,7 +1121,7 @@ CONFIG_MTK_POWER_GS=y
 CONFIG_MTK_SHARED_SDCARD=y
 CONFIG_MTK_GPT_SCHEME_SUPPORT=y
 CONFIG_MTK_SENSOR_SUPPORT=y
-CONFIG_CUSTOM_KERNEL_IMGSENSOR="ov8865_mipi_raw ov8858_mipi_raw ov8856_mipi_raw s5k3m2_mipi_raw_yd s5k3m2_mipi_raw s5k4h5yc_mipi_raw gc2755mipi_raw gc2355_mipi_raw s5k5e2ya_mipi_raw"
+CONFIG_CUSTOM_KERNEL_IMGSENSOR="ov8865_mipi_raw ov8858_mipi_raw ov8856_mipi_raw s5k3m2_mipi_raw_yd s5k3m2_mipi_raw s5k4h5yc_mipi_raw s5k4h8_mipi_raw gc2755mipi_raw gc2355_mipi_raw s5k5e2ya_mipi_raw"
 CONFIG_MTK_HIBERNATION=y
 # CONFIG_MT_ENG_BUILD is not set
 # CONFIG_MTK_LDVT is not set
@@ -1219,7 +1219,7 @@ CONFIG_MTK_GPU_COMMON_DVFS_SUPPORT=y
 CONFIG_MTK_MMPROFILE_SUPPORT=y
 CONFIG_MMPROFILE=y
 CONFIG_MTK_LCM=y
-CONFIG_CUSTOM_KERNEL_LCM="aeon_ili9881c_hd720_dsi_vdo_lide_8536 aeon_ili9881c_hd720_dsi_vdo_lide_8536_D aeon_ili9881c_hd720_dsi_vdo_hlt_8536_25t aeon_rm68200_hd720_dsi_vdo_lide_8536 aeon_hx8394f_hd720_dsi_vdo_lide_8536   aeon_hx8394f_hd720_dsi_vdo_hlt_8536  otm1287a_hd720_dsi_vdo_e520_v511_lide"
+CONFIG_CUSTOM_KERNEL_LCM="aeon_ili9881c_hd720_dsi_vdo_lide_8536 aeon_ili9881c_hd720_dsi_vdo_lide_8536_D aeon_ili9881c_hd720_dsi_vdo_hlt_8536_25t aeon_ili9881c_hd720_dsi_vdo_txd_8536 aeon_rm68200_hd720_dsi_vdo_lide_8536 aeon_hx8394f_hd720_dsi_vdo_lide_8536   aeon_hx8394f_hd720_dsi_vdo_hlt_8536  otm1287a_hd720_dsi_vdo_e520_v511_lide"
 # CONFIG_MTK_LCM_DEVICE_TREE_SUPPORT is not set
 CONFIG_MTK_FB=y
 CONFIG_MTK_VIDEOX=y
@@ -1713,6 +1713,7 @@ CONFIG_CUST_FTS_APK_DEBUG=y
 # CONFIG_TPD_HAVE_CALIBRATION is not set
 # CONFIG_TPD_CUSTOM_CALIBRATION is not set
 CONFIG_TOUCHSCREEN_MTK_AEON_NT11205_HD720_HLT_8536=y
+CONFIG_TOUCHSCREEN_AEON_MSTAR_8630=y
 CONFIG_KEYBOARD_MTK=y
 # CONFIG_KEYBOARD_HID is not set
 CONFIG_ONEKEY_REBOOT_NORMAL_MODE=y
