@@ -167,6 +167,14 @@
 	gyro_intpin_default: gyrodefaultcfg {
 
 	};
+
+        aeon_pins_lcd_id1_gpio: aeon@9 {
+                pins_cmd_dat {
+                        pins = <PINMUX_GPIO80__FUNC_GPIO80>;
+                        slew-rate = <0>;
+                        bias-pull-up = <00>;
+                };
+        };
 };
 
 /delete-node/ &uart3_gpio_def_cfg;
@@ -1246,6 +1254,17 @@
 		100 2922
 		100 2918
 		100 2910 100 2904 100 2897 100 2891 100 2881 100 2873 100 2876 >;
+};
+
+&aeon_gpio {
+        pinctrl-names = "default",
+                                        "aeon_chr_ce0", "aeon_chr_ce1",
+                                        "aeon_factory_id",
+                                        "aeon_flash_enf0", "aeon_flash_enf1", "aeon_flash_enm0", "aeon_flash_enm1",
+                                        "aeon_flash_enm_pwm", "aeon_lcd_id1";
+
+        /* lcd_id-gpio input */
+        pinctrl-9 = <&aeon_pins_lcd_id1_gpio>;
 };
 
 / {
