@@ -163,6 +163,10 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 
 	int print_extra_info = 0;
 	static unsigned long lowmem_print_extra_info_timeout;
+#ifdef CONFIG_SWAP
+	int to_be_aggressive = 0;
+	unsigned long swap_pages = 0;
+#endif
 
 #ifdef CONFIG_MTK_GMO_RAM_OPTIMIZE
 	int other_anon = global_page_state(NR_INACTIVE_ANON) - global_page_state(NR_ACTIVE_ANON);
@@ -210,6 +214,16 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 		other_free >>= 1;
 	}
 #endif
+#ifdef CONFIG_SWAP
+	swap_pages = atomic_long_read(&nr_swap_pages);
+	/* More than 1/2 swap usage */
+	if (swap_pages * 2 < total_swap_pages)
+		to_be_aggressive++;
+
+	/* More than 3/4 swap usage */
+	if (swap_pages * 4 < total_swap_pages)
+		to_be_aggressive++;
+#endif
 
 	if (lowmem_adj_size < array_size)
 		array_size = lowmem_adj_size;
@@ -218,6 +232,13 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 	for (i = 0; i < array_size; i++) {
 		minfree = lowmem_minfree[i];
 		if (other_free < minfree && other_file < minfree) {
+#ifdef CONFIG_SWAP
+			if (to_be_aggressive != 0 && i > 3) {
+				i -= to_be_aggressive;
+				if (i < 3)
+					i = 3;
+			}
+#endif
 			min_score_adj = lowmem_adj[i];
 			break;
 		}
@@ -421,16 +442,23 @@ log_again:
 		lowmem_print(1, "Killing '%s' (%d), adj %d, score_adj %hd,\n"
 				"   to free %ldkB on behalf of '%s' (%d) because\n"
 				"   cache %ldkB is below limit %ldkB for oom_score_adj %hd\n"
-				"   Free memory is %ldkB above reserved\n",
-			     selected->comm, selected->pid,
-				 REVERT_ADJ(selected_oom_score_adj),
+				"   Free memory is %ldkB above reserved\n"
+#ifdef CONFIG_SWAP
+				"   swapfree %ldkB of SwapTatal %ldkB(decrease %d level)\n"
+#endif
+			     , selected->comm, selected->pid,
+			     REVERT_ADJ(selected_oom_score_adj),
 			     selected_oom_score_adj,
 			     selected_tasksize * (long)(PAGE_SIZE / 1024),
 			     current->comm, current->pid,
 			     other_file * (long)(PAGE_SIZE / 1024),
 			     minfree * (long)(PAGE_SIZE / 1024),
 			     min_score_adj,
-			     other_free * (long)(PAGE_SIZE / 1024));
+			     other_free * (long)(PAGE_SIZE / 1024)
+#ifdef CONFIG_SWAP
+			     , swap_pages*4, total_swap_pages*4, to_be_aggressive
+#endif
+		);
 		lowmem_deathpending = selected;
 		lowmem_deathpending_timeout = jiffies + HZ;
 		set_tsk_thread_flag(selected, TIF_MEMDIE);
