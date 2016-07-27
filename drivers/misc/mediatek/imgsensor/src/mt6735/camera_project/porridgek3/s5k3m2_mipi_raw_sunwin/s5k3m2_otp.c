@@ -54,7 +54,8 @@
 static DEFINE_SPINLOCK(g_CAM_CALLock); // for SMP
 #define CAM_CAL_I2C_BUSNUM 0
 
-extern u8 OTPData[];
+//extern u8 OTPData[];
+u8 OTPData[] = {0};
 int otp_flag=0;
 /*******************************************************************************
 *

@@ -150,6 +150,7 @@ static int p_point_num = 0;*/
 unsigned int tpd_rst_gpio_number = 0;
 unsigned int tpd_int_gpio_number = 1;
 static unsigned int touch_irq = 0;
+u8 vendor_id=0;
 #define TPD_OK 0
 
 /* Register define */
@@ -457,7 +458,11 @@ static void tpd_down(int x, int y, int p, int id)
 		TPD_DEBUG("%s x:%d y:%d p:%d\n", __func__, x, y, p);
 		input_report_key(tpd->dev, BTN_TOUCH, 1);
 		input_report_abs(tpd->dev, ABS_MT_TOUCH_MAJOR, 1);
-		input_report_abs(tpd->dev, ABS_MT_POSITION_X, (720-x));
+                if(vendor_id == 240){
+                  input_report_abs(tpd->dev, ABS_MT_POSITION_X, x);
+                }else{
+                  input_report_abs(tpd->dev, ABS_MT_POSITION_X, (720-x));
+                }
 		input_report_abs(tpd->dev, ABS_MT_POSITION_Y, y);
 		input_mt_sync(tpd->dev);
 	}
@@ -1102,10 +1107,14 @@ reset_proc:
 
 	{
 		u8 ver;
+		u8 chip_id;
 
 		fts_read_reg(client, 0xA6, &ver);
 		tpd_firmware_version[0] = ver;
-		TPD_DMESG(TPD_DEVICE " fts_read_reg version : %d\n", ver);
+                fts_read_reg(client, FTS_REG_CHIP_ID, &chip_id);
+                fts_read_reg(client, FTS_REG_VENDOR_ID, &vendor_id);
+                printk(" fts chip_id=%d, vendor_id=%d, ver=%d\n", chip_id, vendor_id, ver);
+
 	}
 
 #ifdef CONFIG_MTK_SENSOR_HUB_SUPPORT

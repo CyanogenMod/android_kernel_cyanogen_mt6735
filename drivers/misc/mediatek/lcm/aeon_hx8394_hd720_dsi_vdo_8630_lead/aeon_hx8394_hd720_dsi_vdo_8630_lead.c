@@ -103,7 +103,7 @@ static struct LCM_setting_table lcm_initialization_setting[] = {
 {0xBD,1,{ 0x00}},
 
 {0xB1,10,{0x50,0x12,0x72,0x09,0x32,0x54,0x71,0x51,0x30,0x50}},
-{0xCC,1,{ 0x03}},
+{0xCC,1,{ 0x0b}},
 {0xC0,2,{ 0x1F,0x73}},
 {0xB6,2,{ 0x51,0x51}},//VCOM
 {0xD4,1,{ 0x02}},
@@ -111,7 +111,7 @@ static struct LCM_setting_table lcm_initialization_setting[] = {
 {0xb1,1,{ 0x00}},
 {0xbD,1,{ 0x00}},
 {0xBF,7,{ 0x40,0x81,0x50,0x00,0x1A,0xFC,0x01}},
-{0x36,1,{ 0x02}},
+//{0x36,1,{ 0x02}},
 {0xc6,1,{ 0xef}},
 {0x51,1,{0xff}},
 {0x53,1,{0x24}},
@@ -226,9 +226,12 @@ static void lcm_get_params(LCM_PARAMS *params)
 
 	params->dsi.esd_check_enable = 1;
 	params->dsi.customization_esd_check_enable = 1;
-	params->dsi.lcm_esd_check_table[0].cmd			= 0xd9;
-	params->dsi.lcm_esd_check_table[0].count		= 1;
+        params->dsi.lcm_esd_check_table[0].cmd			= 0x09;
+	params->dsi.lcm_esd_check_table[0].count		=3;
 	params->dsi.lcm_esd_check_table[0].para_list[0] = 0x80;
+	params->dsi.lcm_esd_check_table[0].para_list[1] = 0x73;
+	params->dsi.lcm_esd_check_table[0].para_list[2] = 0x04;
+
 //	params->dsi.vertical_vfp_lp = 100;
 
 }

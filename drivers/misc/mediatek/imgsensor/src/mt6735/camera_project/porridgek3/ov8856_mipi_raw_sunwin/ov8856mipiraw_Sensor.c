@@ -43,7 +43,7 @@
 
 #define FLIP
 #define MIRROR
-#define OV8856OTP
+//#define OV8856OTP
 
 //#define LOG_WRN(format, args...) xlog_printk(ANDROID_LOG_WARN ,PFX, "[%S] " format, __FUNCTION__, ##args)
 //#defineLOG_INF(format, args...) xlog_printk(ANDROID_LOG_INFO ,PFX, "[%s] " format, __FUNCTION__, ##args)
@@ -52,7 +52,9 @@
 
 
 static DEFINE_SPINLOCK(imgsensor_drv_lock);
-int ov8856_otp = 0;
+#ifdef OV8856OTP
+int ov8856_sw_otp = 0;
+#endif
 static kal_uint32 set_test_pattern_mode(kal_bool enable);
 
 static imgsensor_info_struct imgsensor_info = { 
@@ -155,7 +157,7 @@ static imgsensor_info_struct imgsensor_info = {
 	.sensor_output_dataformat = SENSOR_OUTPUT_FORMAT_RAW_B,//sensor output first pixel color
 	.mclk = 24,//mclk value, suggest 24 or 26 for 24Mhz or 26Mhz
 	.mipi_lane_num = SENSOR_MIPI_2_LANE,//mipi lane num
-	.i2c_addr_table = {0x6c, 0xff},//record sensor support all write id addr, only supprt 4must end with 0xff
+	.i2c_addr_table = {0x42, 0xff},//record sensor support all write id addr, only supprt 4must end with 0xff
 };
 
 
@@ -171,7 +173,7 @@ static imgsensor_struct imgsensor = {
 	.test_pattern = KAL_FALSE,		//test pattern mode or not. KAL_FALSE for in test pattern mode, KAL_TRUE for normal output
 	.current_scenario_id = MSDK_SCENARIO_ID_CAMERA_PREVIEW,//current scenario id
 	.ihdr_en = 0, //sensor need support LE, SE with HDR feature
-	.i2c_write_id = 0x6c,//record current sensor's i2c write id
+	.i2c_write_id = 0x42,//record current sensor's i2c write id
 };
 
 
@@ -1446,8 +1448,10 @@ static kal_uint32 open(void)
 		//kfree(otp_ptr);
 	#endif
 
-        if(ov8856_otp == 0)
+	#ifdef OV8856OTP
+        if(ov8856_sw_otp == 0)
           set_test_pattern_mode(1);
+	#endif
 
 	spin_lock(&imgsensor_drv_lock);
 
@@ -2092,7 +2096,7 @@ static SENSOR_FUNCTION_STRUCT sensor_func = {
 };
 
 
-UINT32 OV8856_MIPI_RAW_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc)
+UINT32 OV8856_MIPI_RAW_SensorInit_SUNWIN(PSENSOR_FUNCTION_STRUCT *pfFunc)
 {
 	/* To Do : Check Sensor status here */
 	if (pfFunc!=NULL)

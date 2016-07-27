@@ -70,16 +70,15 @@ PowerUp PowerOnList={
 				{PDN, Vol_High, 10},
 		   },
 	    },
-    #endif
-
-	#if defined(S5K4H5YC_MIPI_RAW)
-	    {SENSOR_DRVNAME_S5K4H5YC_MIPI_RAW,
+	#endif
+        #if defined(S5K3M2_MIPI_RAW_SUNWIN)
+            {SENSOR_DRVNAME_S5K3M2_MIPI_RAW_SUNWIN,
 		   {
 				{SensorId, MAIN_SENSOR, 0},
 				{SensorMCLK, Mclk1, 0},
 				{RST, Vol_Low, 0},
 				{PDN, Vol_Low, 0},
-				{DVDD, Vol_1200, 10},
+				{DVDD, Vol_1000, 10},
 				{AVDD, Vol_2800, 10},
 				{DOVDD, Vol_1800, 10},
 				{AFVDD, Vol_2800, 10},
@@ -89,22 +88,22 @@ PowerUp PowerOnList={
 	    },
 	#endif
 
-    #if defined(OV8865_MIPI_RAW)
-	    {SENSOR_DRVNAME_OV8865_MIPI_RAW,
-		   {
-				{SensorId, MAIN_SENSOR, 0},
-				{SensorMCLK, Mclk1, 0},
-				{RST, Vol_Low, 0},
-				{PDN, Vol_Low, 0},
-				{DVDD, Vol_1200, 10},
-				{AVDD, Vol_2800, 10},
-				{DOVDD, Vol_1800, 10},
-				{AFVDD, Vol_2800, 10},
-				{RST, Vol_High, 10},
-				{PDN, Vol_High, 10},
-		   },
-	    },
-    #endif
+        #if defined(OV8858_MIPI_RAW)
+        {SENSOR_DRVNAME_OV8858_MIPI_RAW,
+            {
+                {SensorId, MAIN_SENSOR, 0},
+                {SensorMCLK, Mclk1, 0},
+                {RST,    Vol_Low,  0},
+                {PDN,    Vol_Low,  0},
+                {AVDD,    Vol_2800, 10},
+                {DOVDD, Vol_1800, 10},
+                {DVDD,    Vol_1200, 10},
+                {AFVDD, Vol_2800, 10},
+                {RST,    Vol_High, 10},
+                {PDN,    Vol_High, 10},
+            },
+        },
+        #endif
 
     #if defined(OV8856_MIPI_RAW)
         {SENSOR_DRVNAME_OV8856_MIPI_RAW,
@@ -122,26 +121,24 @@ PowerUp PowerOnList={
             },
         },
     #endif
-
-    #if defined(OV8858_MIPI_RAW)
-		{SENSOR_DRVNAME_OV8858_MIPI_RAW,
+    #if defined(GC2355_MIPI_RAW)
+        {SENSOR_DRVNAME_GC2355_MIPI_RAW,
             {
-				{SensorId, MAIN_SENSOR, 0},
-				{SensorMCLK, Mclk1, 0},
-				{RST,	Vol_Low,  0},
-				{PDN,	Vol_Low,  0},
-				{AVDD,	Vol_2800, 10},
-				{DOVDD, Vol_1800, 10},
-				{DVDD,	Vol_1200, 10},
-				{AFVDD, Vol_2800, 10},
-				{RST,	Vol_High, 10},
-				{PDN,	Vol_High, 10},
+                {SensorId, SUB_SENSOR, 0},
+                {SensorMCLK, Mclk1, 0},
+                {RST,    Vol_Low,  0},
+                {PDN,    Vol_High,  0},
+                {AVDD,    Vol_2800, 10},
+                {DOVDD, Vol_1800, 10},
+                {DVDD,    Vol_1200, 10},
+    //            {AFVDD, Vol_2800, 10},
+                {RST,    Vol_High, 10},
+                {PDN,    Vol_Low, 10},
             },
         },
     #endif
-
-    #if defined(OV5670_MIPI_RAW)
-        {SENSOR_DRVNAME_OV5670_MIPI_RAW,
+    #if defined(OV8856_MIPI_RAW_SUNWIN)
+        {SENSOR_DRVNAME_OV8856_MIPI_RAW_SUNWIN,
             {
                 {SensorId, SUB_SENSOR, 0},
                 {SensorMCLK, Mclk1, 0},
@@ -150,103 +147,14 @@ PowerUp PowerOnList={
                 {AVDD,    Vol_2800, 10},
                 {DOVDD, Vol_1800, 10},
                 {DVDD,    Vol_1200, 10},
-                //{AFVDD, Vol_2800, 10},
+    //            {AFVDD, Vol_2800, 10},
                 {RST,    Vol_High, 10},
                 {PDN,    Vol_High, 10},
             },
         },
     #endif
 
-    #if defined(OV5648_MIPI_RAW)
-        {SENSOR_DRVNAME_OV5648_MIPI_RAW,
-            {
-                {SensorId, MAIN_SENSOR, 0},
-                {SensorMCLK, Mclk1, 0},
-                {RST,    Vol_Low,  0},
-                {PDN,    Vol_Low,  0},
-                {AVDD,    Vol_2800, 10},
-                {DOVDD, Vol_1800, 10},
-                {DVDD,    Vol_1500, 10},
-                {AFVDD, Vol_2800, 10},
-                {RST,    Vol_High, 10},
-                {PDN,    Vol_High, 10},
-            },
-        },
-    #endif
 
-    #if defined(S5K5E2YA_MIPI_RAW)
-		{SENSOR_DRVNAME_S5K5E2YA_MIPI_RAW,
-            {
-				{SensorId, SUB_SENSOR, 0},
-				{SensorMCLK, Mclk1, 0},
-				{RST,	Vol_Low,  0},
-				{PDN,	Vol_Low,  0},
-				{AVDD,	Vol_2800, 10},
-				{DOVDD, Vol_1800, 10},
-				{DVDD,	Vol_1500, 10},
-				//{AFVDD, Vol_2800, 10},
-				{RST,	Vol_High, 10},
-				{PDN,	Vol_High, 10},
-            },
-        },
-	#endif
-
-
-	#if defined(SP2509_MIPI_RAW)
-		{SENSOR_DRVNAME_SP2509_MIPI_RAW,
-            {
-				{SensorId, SUB_SENSOR, 0},
-				{SensorMCLK, Mclk1, 0},
-				{RST,	Vol_Low,  0},
-				{PDN,	Vol_High,  0},
-				{AVDD,	Vol_2800, 10},
-				{DOVDD, Vol_1800, 10},
-				{DVDD,	Vol_1500, 10},
-				//{AFVDD, Vol_2800, 10},
-				{RST,	Vol_High, 10},
-				{PDN,	Vol_Low, 10},
-				{PDN,	Vol_High, 20},
-				{PDN,	Vol_Low, 10},
-            },
-        },
-	#endif
-
-    #if defined(GC2755MIPI_RAW)
-		{SENSOR_DRVNAME_GC2755_MIPI_RAW,
-            {
-				{SensorId, SUB_SENSOR, 0},
-				{SensorMCLK, Mclk1, 0},
-				{RST,	Vol_Low,  0},
-				{PDN,	Vol_High,  0},
-				{AVDD,	Vol_2800, 10},
-				{DOVDD, Vol_1800, 10},
-				{DVDD,	Vol_1500, 10},
-				//{AFVDD, Vol_2800, 10},
-				{RST,	Vol_High, 10},
-				{PDN,	Vol_Low, 10},
-				{PDN,	Vol_High, 20},
-				{PDN,	Vol_Low, 10},
-            },
-        },
-	#endif
-    #if defined(GC2355_MIPI_RAW)
-		{SENSOR_DRVNAME_GC2355_MIPI_RAW,
-            {
-				{SensorId, SUB_SENSOR, 0},
-				{SensorMCLK, Mclk1, 0},
-				{RST,	Vol_Low,  0},
-				{PDN,	Vol_High,  0},
-				{AVDD,	Vol_2800, 10},
-				{DOVDD, Vol_1800, 10},
-				{DVDD,	Vol_1500, 10},
-				//{AFVDD, Vol_2800, 10},
-				{RST,	Vol_High, 10},
-				{PDN,	Vol_Low, 10},
-				{PDN,	Vol_High, 20},
-				{PDN,	Vol_Low, 10},
-            },
-        },
-	#endif
         {NULL,},
     }
 };
