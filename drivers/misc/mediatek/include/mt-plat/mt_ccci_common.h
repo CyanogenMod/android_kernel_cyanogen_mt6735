@@ -65,6 +65,9 @@ typedef enum {
 #ifndef CONFIG_MODEM_FIRMWARE_CIP_PATH
 #define CONFIG_MODEM_FIRMWARE_CIP_PATH	"/custom/etc/firmware/"
 #endif
+#ifndef CONFIG_MODEM_USERSPACE_SUFFIX_PATH
+#define CONFIG_MODEM_USERSPACE_SUFFIX_PATH "/custom/etc/firmware/variant"
+#endif
 #define IMG_ERR_STR_LEN				 64
 
 /* image header constants */

@@ -106,3 +106,9 @@ config MODEM_FIRMWARE_CIP_PATH
 	help
 	  Defines a custom path for modem firmware.
 
+config MODEM_USERSPACE_SUFFIX_PATH
+	string "MODEM_USERSPACE_SUFFIX_PATH"
+	default ""
+	help
+	  Defines a custom suffix for the file containing the modem firmware.
+

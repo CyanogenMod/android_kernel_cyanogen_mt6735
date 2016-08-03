@@ -33,6 +33,7 @@
 #endif
 #define ENABLE_MEM_SIZE_CHECK
 #define MAX_MD_NUM (6)		/* Max 4 internal + Max 2 exteranl */
+#include <linux/ctype.h>
 
 /*==================================================== */
 /* Image process section */
@@ -78,28 +79,59 @@ static int check_dsp_header(int md_id, void *parse_addr, struct ccci_image_info 
 	return 0;
 }
 
+static inline void filter_suffix(char *suffix, int len) {
+	int i;
+	for (i = 0; i < len; i++)
+		if (!isalnum(suffix[i]))
+			suffix[i] = 0;
+}
+
 int scan_image_list(int md_id, char fmt[], int out_img_list[], int img_list_size)
 {
 	int i;
 	int img_num = 0;
 	char full_path[64] = { 0 };
+	char cip_suffix[64] = { 0 };
 	char img_name[32] = { 0 };
+	ssize_t nread;
 	struct file *filp = NULL;
 
 	for (i = 0; i < (sizeof(type_str) / sizeof(char *)); i++) {
 		snprintf(img_name, 32, fmt, md_id + 1, type_str[i]);
+
+		/* Try to get an optional suffix from the userspace suffixed path for region-specific
+		 * variants. */
+		filp = filp_open(CONFIG_MODEM_USERSPACE_SUFFIX_PATH, O_RDONLY, 0644);
+		if (!IS_ERR(filp)) {
+			nread = (int)filp->f_op->read(filp, cip_suffix, sizeof(cip_suffix), &filp->f_pos);
+			if (nread > 0) {
+				cip_suffix[nread] = 0;
+				filter_suffix(cip_suffix, sizeof(cip_suffix));
+			}
+			filp_close(filp, current->files);
+		}
+
 		/* Find at CIP first */
 		snprintf(full_path, 64, "%s%s", CONFIG_MODEM_FIRMWARE_CIP_PATH, img_name);
 		CCCI_UTIL_INF_MSG_WITH_ID(md_id, "Find:%s\n", full_path);
 		filp = filp_open(full_path, O_RDONLY, 0644);
 		if (IS_ERR(filp)) {
-			/* Find at default */
-			snprintf(full_path, 64, "%s%s", CONFIG_MODEM_FIRMWARE_PATH, img_name);
-			CCCI_UTIL_INF_MSG_WITH_ID(md_id, "Find:%s\n", full_path);
-			filp = filp_open(full_path, O_RDONLY, 0644);
+			/* Find with userspace suffix */
+			if (cip_suffix[0] != 0) {
+				snprintf(full_path, 64, "%s%s_%s", CONFIG_MODEM_FIRMWARE_PATH, img_name, cip_suffix);
+				CCCI_UTIL_INF_MSG_WITH_ID(md_id, "Find:%s\n", full_path);
+				filp = filp_open(full_path, O_RDONLY, 0644);
+			}
+
 			if (IS_ERR(filp)) {
-				CCCI_UTIL_INF_MSG_WITH_ID(md_id, "%s not found(%d,%d)\n", full_path, img_num, i);
-				continue;
+				/* Find at default */
+				snprintf(full_path, 64, "%s%s", CONFIG_MODEM_FIRMWARE_PATH, img_name);
+				CCCI_UTIL_INF_MSG_WITH_ID(md_id, "Find:%s\n", full_path);
+				filp = filp_open(full_path, O_RDONLY, 0644);
+				if (IS_ERR(filp)) {
+					CCCI_UTIL_INF_MSG_WITH_ID(md_id, "%s not found(%d,%d)\n", full_path, img_num, i);
+					continue;
+				}
 			}
 		}
 		/* Run here means open image success */
@@ -851,7 +883,9 @@ static int find_img_to_open(int md_id, MD_IMG_TYPE img_type, char active_file_pa
 {
 	char img_name[3][IMG_NAME_LEN];
 	char full_path[IMG_PATH_LEN];
-	int i;
+	char cip_suffix[IMG_PATH_LEN];
+	int  i;
+	ssize_t nread;
 	char post_fix[IMG_POSTFIX_LEN];
 	char post_fix_ex[IMG_POSTFIX_LEN];
 	struct file *filp = NULL;
@@ -880,6 +914,38 @@ static int find_img_to_open(int md_id, MD_IMG_TYPE img_type, char active_file_pa
 	for (i = 0; i < 3; i++) {
 		CCCI_UTIL_DBG_MSG_WITH_ID(md_id, "try to open %s\n", img_name[i]);
 		snprintf(full_path, IMG_PATH_LEN, "%s%s", CONFIG_MODEM_FIRMWARE_CIP_PATH, img_name[i]);
+		filp = filp_open(full_path, O_RDONLY, 0644);
+		if (IS_ERR(filp)) {
+			continue;
+		} else {	/* Open image success */
+			snprintf(active_file_path, IMG_PATH_LEN, full_path);
+			filp_close(filp, current->files);
+			if (i == 0)
+				snprintf(active_post_fix, IMG_POSTFIX_LEN, "%s", post_fix);
+			else if (i == 1)
+				snprintf(active_post_fix, IMG_POSTFIX_LEN, "%s", post_fix_ex);
+			else
+				active_post_fix[0] = '\0';
+			return 0;
+		}
+	}
+
+	/* Try to get an optional suffix from the userspace suffix path for region-specific
+	 * variants. */
+	filp = filp_open(CONFIG_MODEM_USERSPACE_SUFFIX_PATH, O_RDONLY, 0644);
+	if (!IS_ERR(filp)) {
+		nread = (int)filp->f_op->read(filp, cip_suffix, sizeof(cip_suffix), &filp->f_pos);
+		if (nread > 0) {
+			cip_suffix[nread] = 0;
+			filter_suffix(cip_suffix, sizeof(cip_suffix));
+		}
+		filp_close(filp, current->files);
+	}
+
+	CCCI_UTIL_DBG_MSG_WITH_ID(md_id, "Find img @userspaceCIP\n");
+	for (i = 0; i < 3; i++) {
+		CCCI_UTIL_DBG_MSG_WITH_ID(md_id, "try to open %s_%s\n", img_name[i], cip_suffix);
+		snprintf(full_path, IMG_PATH_LEN, "%s%s_%s", CONFIG_MODEM_FIRMWARE_PATH, img_name[i], cip_suffix);
 		filp = filp_open(full_path, O_RDONLY, 0644);
 		if (IS_ERR(filp)) {
 			continue;
