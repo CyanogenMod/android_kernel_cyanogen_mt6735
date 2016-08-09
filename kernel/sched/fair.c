@@ -2895,7 +2895,8 @@ static inline void update_entity_load_avg(struct sched_entity *se,
 
 	if (!__update_entity_runnable_avg(now, cpu, &se->avg, se->on_rq, cfs_rq->curr == se)) {
 		/* sched: add trace_sched */
-		trace_sched_task_entity_avg(2, task_of(se), &se->avg);
+		if (entity_is_task(se))
+			trace_sched_task_entity_avg(2, task_of(se), &se->avg);
 		return;
 	}
 
@@ -7212,8 +7213,11 @@ static void update_cfs_rq_h_load(struct cfs_rq *cfs_rq)
 {
 	struct rq *rq = rq_of(cfs_rq);
 	struct sched_entity *se = cfs_rq->tg->se[cpu_of(rq)];
-	unsigned long now = jiffies;
+	u64 now = sched_clock_cpu(cpu_of(rq));
 	unsigned long load;
+
+	/* sched: change to jiffies */
+	now = now * HZ >> 30;
 
 	if (cfs_rq->last_h_load_update == now)
 		return;

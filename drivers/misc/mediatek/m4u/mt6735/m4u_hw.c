@@ -1228,13 +1228,20 @@ static inline void _m4u_port_clock_toggle(int m4u_index, int larb, int on)
 
 int m4u_config_port(M4U_PORT_STRUCT *pM4uPort) /* native */
 {
-	M4U_PORT_ID PortID = (pM4uPort->ePortID);
-	int m4u_index = m4u_port_2_m4u_id(PortID);
-	int larb = m4u_port_2_larb_id(PortID);
+	int m4u_index;
+	M4U_PORT_ID PortID;
+	int larb;
 	int ret;
 #ifdef M4U_TEE_SERVICE_ENABLE
 	unsigned int larb_port, mmu_en = 0, sec_en = 0;
 #endif
+	if (pM4uPort->ePortID < 0 || pM4uPort->ePortID > M4U_PORT_UNKNOWN) {
+		M4UERR("port is unknown,error port is %d\n", pM4uPort->ePortID);
+		return -1;
+	}
+	PortID = (pM4uPort->ePortID);
+	m4u_index = m4u_port_2_m4u_id(PortID);
+	larb = m4u_port_2_larb_id(PortID);
 
 	_m4u_port_clock_toggle(m4u_index, larb, 1);
 
@@ -1386,7 +1393,13 @@ void m4u_get_perf_counter(int m4u_index, int m4u_slave_id, M4U_PERF_COUNT *pM4U_
 
 int m4u_monitor_start(int m4u_id)
 {
-	unsigned long m4u_base = gM4UBaseAddr[m4u_id];
+	unsigned long m4u_base;
+
+	if (m4u_id < 0) {
+		M4UERR("ERROR m4u id ,error id is %d\n", m4u_id);
+		return -1;
+	}
+	m4u_base = gM4UBaseAddr[m4u_id];
 
 	M4UINFO("====m4u_monitor_start: %d======\n", m4u_id);
 	/* clear GMC performance counter */
@@ -1410,7 +1423,13 @@ int m4u_monitor_stop(int m4u_id)
 {
 	M4U_PERF_COUNT cnt;
 	int m4u_index = m4u_id;
-	unsigned long m4u_base = gM4UBaseAddr[m4u_index];
+	unsigned long m4u_base;
+
+	if (m4u_id < 0) {
+		M4UERR("ERROR m4u id ,error id is %d\n", m4u_id);
+		return -1;
+	}
+	m4u_base = gM4UBaseAddr[m4u_id];
 
 	/* disable GMC performance monitor */
 	m4uHw_set_field_by_mask(m4u_base, REG_MMU_CTRL_REG,
@@ -1886,7 +1905,7 @@ irqreturn_t MTK_M4U_isr(int irq, void *dev_id)
 
 			if (M4U_PORT_DISP_OVL0 == m4u_port
 #if defined(CONFIG_ARCH_MT6753)
-				|| M4U_PORT_DISP_OVL1 == m4u_port
+				|| M4U_PORT_DISP_OVL1 == m4u_port || M4U_PORT_DISP_OD_W == m4u_port
 #endif
 			) {
 				unsigned int valid_mva = 0;
@@ -1895,7 +1914,7 @@ irqreturn_t MTK_M4U_isr(int irq, void *dev_id)
 
 				m4u_query_mva_info(fault_mva-1, 0, &valid_mva, &valid_size);
 				if (0 != valid_mva && 0 != valid_size)
-					valid_mva_end = valid_mva+valid_size;
+					valid_mva_end = valid_mva+valid_size-1;
 
 				if ((0 != valid_mva_end && fault_mva < valid_mva_end+SZ_4K)
 				        || m4u_pte_invalid(m4u_get_domain_by_port(m4u_port), fault_mva)) {

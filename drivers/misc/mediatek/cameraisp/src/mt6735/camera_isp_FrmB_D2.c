@@ -490,6 +490,9 @@ static MUINT32 g_DmaErr_p1[nDMA_ERR] = { 0 };
 }
 #if 1
 #define IRQ_LOG_KEEPER(irq, ppb, logT, fmt, ...) do {\
+	if (irq >= _IRQ_MAX) {\
+		LOG_ERR("IRQ_LOG_KEEPER : Array Max Size Exceeded!");\
+	} else {\
 	char *ptr; \
 	char *pDes;\
 	MUINT32 *ptr2 = &gSvLog[irq]._cnt[ppb][logT];\
@@ -511,6 +514,7 @@ static MUINT32 g_DmaErr_p1[nDMA_ERR] = { 0 };
 	while (*ptr++ != '\0') {        \
 		(*ptr2)++;\
 	}     \
+	} \
 } while (0);
 #else
 #define IRQ_LOG_KEEPER(irq, ppb, logT, fmt, ...)  pr_debug("KEEPER[%s] " fmt, __func__, ##__VA_ARGS__)
@@ -518,6 +522,9 @@ static MUINT32 g_DmaErr_p1[nDMA_ERR] = { 0 };
 
 #if 1
 #define IRQ_LOG_PRINTER(irq, ppb_in, logT_in) do {\
+	if (irq >= _IRQ_MAX) {\
+		LOG_ERR("IRQ_LOG_PRINTER : Array Max Size Exceeded !");\
+	} else {\
 	SV_LOG_STR *pSrc = &gSvLog[irq];\
 	char *ptr;\
 	MUINT32 i;\
@@ -573,6 +580,7 @@ static MUINT32 g_DmaErr_p1[nDMA_ERR] = { 0 };
 		} \
 		ptr[0] = '\0';\
 		pSrc->_cnt[ppb][logT] = 0;\
+	} \
 	} \
 } while (0);
 

@@ -2560,9 +2560,11 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *rqc)
 			break;
 		case MMC_BLK_CMD_ERR:
 			ret = mmc_blk_cmd_err(md, card, brq, req, ret);
-			if (!mmc_blk_reset(md, card->host, type))
-				break;
+			if (mmc_blk_reset(md, card->host, type))
 			goto cmd_abort;
+			if (!ret)
+				goto start_new_req;
+			break;
 		case MMC_BLK_RETRY:
 			if (retry++ < 5)
 				break;
@@ -3159,9 +3161,7 @@ static const struct mmc_fixup blk_fixups[] =
 	MMC_FIXUP("FJ25AB", CID_MANFID_SAMSUNG, 0x100, add_quirk_mmc,
 		  MMC_QUIRK_DISABLE_CACHE),
 #endif
-	MMC_FIXUP("SEM16G", CID_MANFID_SANDISK_EMMC, CID_OEMID_ANY, add_quirk_mmc,
-		  MMC_QUIRK_DISABLE_SNO),
-	MMC_FIXUP("SEM08G", CID_MANFID_SANDISK_EMMC, CID_OEMID_ANY, add_quirk_mmc,
+	MMC_FIXUP(CID_NAME_ANY, CID_MANFID_SANDISK_EMMC, CID_OEMID_ANY, add_quirk_mmc,
 		  MMC_QUIRK_DISABLE_SNO),
 
 	END_FIXUP

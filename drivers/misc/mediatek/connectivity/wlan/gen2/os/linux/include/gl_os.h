@@ -454,7 +454,7 @@
 
 #define CFG_TX_STOP_NETIF_QUEUE_THRESHOLD   256	/* packets */
 
-#define CFG_TX_STOP_NETIF_PER_QUEUE_THRESHOLD   512	/* packets */
+#define CFG_TX_STOP_NETIF_PER_QUEUE_THRESHOLD   256	/* packets */
 #define CFG_TX_START_NETIF_PER_QUEUE_THRESHOLD  128	/* packets */
 
 #define ETH_P_1X                            0x888E
@@ -526,6 +526,8 @@
 
 /* for CFG80211 IE buffering mechanism */
 #define CFG_CFG80211_IE_BUF_LEN     (512)
+#define GLUE_INFO_WSCIE_LENGTH		500
+
 
 /*******************************************************************************
 *                    E X T E R N A L   R E F E R E N C E S
@@ -568,6 +570,7 @@
 #include <linux/cdev.h>		/* for cdev interface */
 
 #include <linux/firmware.h>	/* for firmware download */
+#include <linux/fb.h>
 
 #if defined(_HIF_SDIO)
 #include <linux/mmc/sdio.h>
@@ -898,7 +901,7 @@ struct _GLUE_INFO_T {
 #endif
 #endif
 	BOOLEAN fgWpsActive;
-	UINT_8 aucWSCIE[500];	/*for probe req */
+	UINT_8 aucWSCIE[GLUE_INFO_WSCIE_LENGTH];	/*for probe req */
 	UINT_16 u2WSCIELen;
 	UINT_8 aucWSCAssocInfoIE[200];	/*for Assoc req */
 	UINT_16 u2WSCAssocInfoIELen;

@@ -182,3 +182,5 @@ obj-$(CONFIG_MTK_TINYSYS_SCP_SUPPORT) += scp/
 ifneq ($(wildcard $(srctree)/drivers/misc/mediatek/cpu_stress/),)
 obj-$(CONFIG_MTK_CPU_STRESS)	+= cpu_stress/
 endif
+
+obj-$(CONFIG_PWR_LOSS_MTK_SPOH) += power-loss-test/

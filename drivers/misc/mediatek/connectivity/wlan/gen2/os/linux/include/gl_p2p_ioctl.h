@@ -594,6 +594,7 @@ int mtk_p2p_cfg80211_testmode_hotspot_block_cmd(IN struct wiphy *wiphy, IN void 
 
 /* I/O control handlers */
 
+#if 0
 int
 mtk_p2p_wext_get_priv(IN struct net_device *prDev,
 		      IN struct iw_request_info *info, IN OUT union iwreq_data *wrqu, IN OUT char *extra);
@@ -739,9 +740,11 @@ mtk_p2p_wext_set_p2p_version(IN struct net_device *prDev,
 int
 mtk_p2p_wext_get_p2p_version(IN struct net_device *prDev,
 			     IN struct iw_request_info *info, IN OUT union iwreq_data *wrqu, IN OUT char *extra);
+#endif
 
 void mtk_p2p_wext_set_Multicastlist(IN P_GLUE_INFO_T prGlueInfo);
 
+#if 0
 #if CFG_SUPPORT_P2P_RSSI_QUERY
 int
 mtk_p2p_wext_get_rssi(IN struct net_device *prDev,
@@ -754,7 +757,7 @@ struct iw_statistics *mtk_p2p_wext_get_wireless_stats(struct net_device *prDev);
 int
 mtk_p2p_wext_set_txpow(IN struct net_device *prDev,
 		       IN struct iw_request_info *prIwrInfo, IN OUT union iwreq_data *prTxPow, IN char *pcExtra);
-
+#endif
 /*******************************************************************************
 *                              F U N C T I O N S
 ********************************************************************************

@@ -1095,9 +1095,16 @@ static int mtkfb_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg
 			disp_input_config *input;
 
 			memset((void *)&session_input, 0, sizeof(session_input));
+			if (layerInfo.layer_id >= TOTAL_OVL_LAYER_NUM) {
+				MTKFB_LOG
+					("MTKFB_SET_OVERLAY_LAYER, layer_id invalid=%d\n",
+					 layerInfo.layer_id);
+			} else {
 			input = &session_input.config[session_input.config_layer_num++];
-
 			_convert_fb_layer_to_disp_input(&layerInfo, input);
+			}
+
+
 			primary_display_config_input_multiple(&session_input);
 			primary_display_trigger(1, NULL, 0);
 		}
@@ -1355,13 +1362,26 @@ static int mtkfb_compat_ioctl(struct fb_info *info, unsigned int cmd, unsigned l
 	{
 		compat_ulong_t __user *data32;
 		unsigned long *pbuf;
-		compat_ulong_t l;
+		unsigned int pixel_bpp = info->var.bits_per_pixel / 8;
+		unsigned int fbsize = DISP_GetScreenHeight() * DISP_GetScreenWidth() * pixel_bpp;
+		unsigned long dest;
 
 		data32 = compat_ptr(arg);
-		pbuf = compat_alloc_user_space(sizeof(unsigned long));
-		ret = get_user(l, data32);
-		ret |= put_user(l, pbuf);
-		primary_display_capture_framebuffer_ovl(*pbuf, eBGRA8888);
+		pbuf = compat_alloc_user_space(fbsize);
+
+		if (!pbuf) {
+			pr_warn("[FB]: vmalloc capture src_pbuf failed! line:%d\n", __LINE__);
+			ret  = -EFAULT;
+		} else {
+			dprec_logger_start(DPREC_LOGGER_WDMA_DUMP, 0, 0);
+			primary_display_capture_framebuffer_ovl((unsigned long)pbuf, eBGRA8888);
+			dprec_logger_done(DPREC_LOGGER_WDMA_DUMP, 0, 0);
+			ret = get_user(dest, data32);
+			if (copy_in_user((unsigned long *)dest, pbuf, fbsize/2)) {
+				pr_warn("[FB]: copy_to_user failed! line:%d\n", __LINE__);
+				ret  = -EFAULT;
+			}
+		}
 		break;
 	}
 	case COMPAT_MTKFB_TRIG_OVERLAY_OUT:
@@ -1392,9 +1412,14 @@ static int mtkfb_compat_ioctl(struct fb_info *info, unsigned int cmd, unsigned l
 				return MTKFB_ERROR_IS_EARLY_SUSPEND;
 			}
 			memset((void *)&session_input, 0, sizeof(session_input));
+			if (layerInfo.layer_id >= TOTAL_OVL_LAYER_NUM) {
+				DDPAEE
+					("COMPAT_MTKFB_SET_OVERLAY_LAYER, layer_id invalid=%d\n",
+					 layerInfo.layer_id);
+			} else {
 			input = &session_input.config[session_input.config_layer_num++];
-
 			_convert_fb_layer_to_disp_input(&layerInfo, input);
+			}
 			primary_display_config_input_multiple(&session_input);
 			/* primary_display_trigger(1, NULL, 0); */
 		}
@@ -1420,6 +1445,12 @@ static int mtkfb_compat_ioctl(struct fb_info *info, unsigned int cmd, unsigned l
 
 			for (i = 0; i < VIDEO_LAYER_COUNT; ++i) {
 				compat_convert(&compat_layerInfo[i], &layerInfo);
+				if (layerInfo.layer_id >= OVL_LAYER_NUM) {
+					DDPAEE
+					    ("COMPAT_MTKFB_SET_VIDEO_LAYERS, layer_id invalid=%d\n",
+					     layerInfo.layer_id);
+					continue;
+				}
 				input =
 				    &session_input.config[session_input.config_layer_num++];
 				_convert_fb_layer_to_disp_input(&layerInfo, input);
