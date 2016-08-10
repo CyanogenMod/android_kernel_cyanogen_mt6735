@@ -1205,8 +1205,8 @@ int VCM_dir;
 };
 struct otp_struct otp_ptr;
 
-#define RG_Ratio_Typical   0x12A
-#define BG_Ratio_Typical   0x168
+#define RG_Ratio_Typical   0x150
+#define BG_Ratio_Typical   0x17a
 
 int ov8856_read_otp(struct otp_struct *otp_ptr)
 {

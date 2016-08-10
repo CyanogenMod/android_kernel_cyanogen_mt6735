@@ -44,21 +44,19 @@
 #define LOG_INF(format, args...)	//pr_debug(ANDROID_LOG_INFO   , PFX, "[%s] " format, __FUNCTION__, ##args)
 #define LOGE(format, args...)   //pr_debug(ANDROID_LOG_ERROR, PFX, "[%s] " format, __FUNCTION__, ##args)
 
-/*#define OTP_SIZE 0x74c
+//#define S5K3m2_QT_OTP
+#ifdef S5K3m2_QT_OTP
+#define OTP_SIZE 0x74c
 #define LSC_addr  0x0400
-extern int otp_flag;
-u8 OTPData[OTP_SIZE];
-extern int iReadData(unsigned int  ui4_offset, unsigned int  ui4_length, unsigned char * pinputdata);
-*/
+extern int otp_flag_qt;
+u8 OTPData_qt[OTP_SIZE];
+extern int iReadData_qt(unsigned int  ui4_offset, unsigned int  ui4_length, unsigned char * pinputdata);
+int s5k_qt_otp = 0;
+static kal_uint32 set_test_pattern_mode(kal_bool enable);
+#endif
+
 #define GPIO_CAMERA_ID 63
 
-int s5k_otp = 0;
-static kal_uint32 set_test_pattern_mode(kal_bool enable);
- //vivo zcw++ OTP
-extern kal_bool otp_update(void);
-extern kal_bool otp_wb_update(void);
-extern kal_bool otp_lsc_update(void);
- //vivo zcw-- 
 static DEFINE_SPINLOCK(imgsensor_drv_lock);
 static imgsensor_info_struct imgsensor_info = { 
 	.sensor_id = S5K3M2_SENSOR_ID,
@@ -247,7 +245,7 @@ static imgsensor_struct imgsensor = {
 	.test_pattern = KAL_FALSE,		//test pattern mode or not. KAL_FALSE for in test pattern mode, KAL_TRUE for normal output
 	.current_scenario_id = MSDK_SCENARIO_ID_CAMERA_PREVIEW,//current scenario id
 	.ihdr_en = KAL_FALSE, //sensor need support LE, SE with HDR feature
-	.i2c_write_id = 0x5A,
+	.i2c_write_id = 0x20,
 };
 
 
@@ -378,9 +376,6 @@ static void write_shutter(kal_uint16 shutter)
     write_cmos_sensor(0x0202, shutter);
     //write_cmos_sensor_8(0x0104,0x00);
 	LOG_INF("Exit! shutter =%d, framelength =%d\n", shutter,imgsensor.frame_length);
-	printk("******************************************\n");
-	printk("Exit! shutter =%d, framelength =%d\n", shutter,imgsensor.frame_length);
-	printk("******************************************\n");
 }	/*	write_shutter  */
 
 
@@ -1743,17 +1738,21 @@ static void sensor_init(void)
   write_cmos_sensor(0x980A, 0x0C8E);
   write_cmos_sensor(0x623E, 0x0004);
 
- 	mdelay(2);
+  
+  //For PDAF on, OB=64 & dunamic bpc must off  
+  
+  //For power consumption, need apply straong MTK bpc patch
+  	mdelay(2);
   // Stream On
   //write_cmos_sensor(0x602A, 0x0100);
   //write_cmos_sensor_8(0x6F12, 0x01);
 
-	otp_wb_update();//vivo zcw++ 20140910
-	otp_lsc_update();
+//  del by yfx
+//	otp_wb_update();//vivo zcw++ 20140910
+//	otp_lsc_update();
 
     mdelay(5);//vivo zcw++ 20141027 Add for prevent WAIT_IRQ timeout	
     LOG_INF("Exit\n");
-
   //s 2014/12/01, bruce
   } else if ((chip_id == 0xD101) || (chip_id == 0xD201)) {
     LOG_INF("-- sensor_init, chip id = 0xD101\n");
@@ -1917,16 +1916,7 @@ static void sensor_init(void)
   write_cmos_sensor(0x3B5C, 0x0006);
   
   //For PDAF on, OB=64 & dunamic bpc must off
-   	mdelay(2);
-  // Stream On
-  //write_cmos_sensor(0x602A, 0x0100);
-  //write_cmos_sensor_8(0x6F12, 0x01);
-
-	otp_wb_update();//vivo zcw++ 20140910
-	otp_lsc_update();
-
-    mdelay(5);//vivo zcw++ 20141027 Add for prevent WAIT_IRQ timeout	
-    LOG_INF("Exit\n");
+  
   //For power consumption, need apply straong MTK bpc patch
   } else { // all other ID
     LOG_INF("-- sensor_init, Read back other chip id = 0x%x\n", chip_id);
@@ -2789,7 +2779,7 @@ static void slim_video_setting(void)
 *************************************************************************/
 static kal_uint32 get_imgsensor_id(UINT32 *sensor_id) 
 {
-	kal_uint8 i = 0;
+    kal_uint8 i = 0;
     kal_uint8 retry = 1;
     kal_uint8 camera_id = -1;
     /*sensor have two i2c address 0x6c 0x6d & 0x21 0x20, we should detect the module used i2c address*/
@@ -2800,8 +2790,8 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
     mt_set_gpio_pull_select(GPIO_CAMERA_ID, GPIO_PULL_UP);
     camera_id = mt_get_gpio_in(GPIO_CAMERA_ID);
 
-    printk("s5k3m2_yd i2c camera_id:%d\n", camera_id);    
-    if (camera_id != 0) { 
+    printk("s5k3m2_qt i2c camera_id:%d\n", camera_id);    
+    if (camera_id != 1){ 
         *sensor_id = 0xFFFFFFFF;
         return ERROR_SENSOR_CONNECT_FAIL;
     }
@@ -2809,22 +2799,23 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
         spin_lock(&imgsensor_drv_lock);
         imgsensor.i2c_write_id = imgsensor_info.i2c_addr_table[i];
         spin_unlock(&imgsensor_drv_lock);
-        do {
-			write_cmos_sensor(0x602C,0x4000);
-			write_cmos_sensor(0x602E,0x0000);
-			*sensor_id = read_cmos_sensor(0x6F12);
-			//*sensor_id = imgsensor_info.sensor_id;
-            if (*sensor_id == imgsensor_info.sensor_id) { 
-				printk("--->>>read LSC_addr in get_imgsensor_id func\n");
-				/*iReadData(LSC_addr,OTP_SIZE,OTPData); 
-				otp_flag = 1;*/
-				s5k_otp = otp_update();
-                LOG_INF("i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id,*sensor_id);  
-                printk("s5k3m2 i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id,*sensor_id);    
+        do{
+            write_cmos_sensor(0x602C,0x4000);
+	    write_cmos_sensor(0x602E,0x0000);
+            *sensor_id = read_cmos_sensor(0x6F12);
+            //*sensor_id = imgsensor_info.sensor_id;
+
+            if (*sensor_id == imgsensor_info.sensor_id){ 
+#ifdef S5K3m2_QT_OTP
+                printk("--->>>read LSC_addr in get_imgsensor_id func\n");
+                iReadData_qt(LSC_addr,OTP_SIZE,OTPData_qt); 
+                otp_flag_qt = 1;
+#endif
+                printk("s5k3m2_qt i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id,*sensor_id);    
                 return ERROR_NONE;
             }   
             LOG_INF("Read sensor id fail, write id: 0x%x, sensor id = 0x%x\n", imgsensor.i2c_write_id,*sensor_id);
-            printk("s5k3m2 Read sensor id fail, write id: 0x%x, sensor id = 0x%x\n", imgsensor.i2c_write_id,*sensor_id);
+            printk("s5k3m2_qt Read sensor id fail, write id: 0x%x, sensor id = 0x%x\n", imgsensor.i2c_write_id,*sensor_id);
             retry--;
         } while(retry > 0);
         i++;
@@ -2861,35 +2852,35 @@ static kal_uint32 open(void)
 	kal_uint8 i = 0;
 	kal_uint8 retry = 2;
 	kal_uint16 sensor_id = 0; 
-	kal_uint16 camera_id = -1; 
+        kal_uint16 camera_id = -1;
 	LOG_1;
 	LOG_2;
+	//sensor have two i2c address 0x5a 0x5b & 0x21 0x20, we should detect the module used i2c address
 
         mt_set_gpio_mode(GPIO_CAMERA_ID, GPIO_MODE_00);
         mt_set_gpio_dir(GPIO_CAMERA_ID, GPIO_DIR_IN);
         mt_set_gpio_pull_enable(GPIO_CAMERA_ID, 1);
         mt_set_gpio_pull_select(GPIO_CAMERA_ID, GPIO_PULL_UP);
         camera_id = mt_get_gpio_in(GPIO_CAMERA_ID);
-
-        if (camera_id != 0) { 
+        
+        if (camera_id != 1){ 
             return ERROR_SENSOR_CONNECT_FAIL;
         }
-
-	//sensor have two i2c address 0x5a 0x5b & 0x21 0x20, we should detect the module used i2c address
 	    while (imgsensor_info.i2c_addr_table[i] != 0xff) {
         spin_lock(&imgsensor_drv_lock);
         imgsensor.i2c_write_id = imgsensor_info.i2c_addr_table[i];
         spin_unlock(&imgsensor_drv_lock);
         do {
-			write_cmos_sensor(0x602C,0x4000);
-			write_cmos_sensor(0x602E,0x0000);
+			
+            write_cmos_sensor(0x602C,0x4000);
+	    write_cmos_sensor(0x602E,0x0000);
             sensor_id =  read_cmos_sensor(0x6F12);
-			//sensor_id = imgsensor_info.sensor_id;
-            if (sensor_id == imgsensor_info.sensor_id) {                
-                LOG_INF("i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id,sensor_id);   
+
+            if (sensor_id == imgsensor_info.sensor_id){ 
+                LOG_INF("s5k3m2_qt i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id,sensor_id);   
                 break;
             }   
-            LOG_INF("Read sensor id fail, id: 0x%x\n", imgsensor.i2c_write_id,sensor_id);
+            LOG_INF("s5k3m2_qt Read sensor id fail, id: 0x%x\n", imgsensor.i2c_write_id,sensor_id);
             retry--;
         } while(retry > 0);
         i++;
@@ -2902,9 +2893,10 @@ static kal_uint32 open(void)
 	/* initail sequence write in  */
 	sensor_init();
 
-        if(s5k_otp == 0)
-          set_test_pattern_mode(1);
-
+#ifdef S5K3m2_QT_OTP
+        if(s5k_qt_otp == 0)
+        set_test_pattern_mode(1);
+#endif
 	spin_lock(&imgsensor_drv_lock);
 
 	imgsensor.autoflicker_en= KAL_FALSE;
@@ -2972,7 +2964,8 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 					  MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
 	LOG_INF("E\n");
-        
+
+
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.sensor_mode = IMGSENSOR_MODE_PREVIEW;
 	imgsensor.pclk = imgsensor_info.pre.pclk;
@@ -3783,7 +3776,7 @@ static SENSOR_FUNCTION_STRUCT sensor_func = {
 	close
 };
 
-UINT32 S5K3M2_MIPI_RAW_SensorInit_YD(PSENSOR_FUNCTION_STRUCT *pfFunc)
+UINT32 S5K3M2_MIPI_RAW_SensorInit_QT(PSENSOR_FUNCTION_STRUCT *pfFunc)
 {
 	/* To Do : Check Sensor status here */
 	if (pfFunc!=NULL)
