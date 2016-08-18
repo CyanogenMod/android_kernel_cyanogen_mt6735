@@ -147,7 +147,7 @@ static int tpd_keys_dim_local[TPD_KEY_COUNT][4] = TPD_KEYS_DIM;
 #endif
 static u8 boot_mode;
 
-unsigned int gesture_input = 1;
+unsigned int gesture_input = 0;
 // for DMA accessing
 static u8 *gpDMABuf_va;
 static dma_addr_t gpDMABuf_pa;
@@ -3662,6 +3662,46 @@ static int tpd_local_init(void)
 	return 0;
 }
 
+static void synaptics_rmi4_sleep_enable(struct synaptics_rmi4_data *rmi4_data,
+		bool enable)
+{
+	int retval;
+	unsigned char device_ctrl;
+	unsigned char no_sleep_setting = rmi4_data->no_sleep_setting;
+
+	retval = synaptics_rmi4_i2c_read(rmi4_data,
+			rmi4_data->f01_ctrl_base_addr,
+			&device_ctrl,
+			sizeof(device_ctrl));
+	if (retval < 0) {
+		dev_err(&rmi4_data->i2c_client->dev,
+				"%s: Failed to read device control\n",
+				__func__);
+		return;
+	}
+
+	device_ctrl = device_ctrl & ~MASK_3BIT;
+	if (enable)
+		device_ctrl = device_ctrl | NO_SLEEP_OFF | SENSOR_SLEEP;
+	else
+		device_ctrl = device_ctrl | no_sleep_setting | NORMAL_OPERATION;
+
+	retval = synaptics_rmi4_i2c_write(rmi4_data,
+			rmi4_data->f01_ctrl_base_addr,
+			&device_ctrl,
+			sizeof(device_ctrl));
+	if (retval < 0) {
+		dev_err(&rmi4_data->i2c_client->dev,
+				"%s: Failed to write device control\n",
+				__func__);
+		return;
+	}
+
+	rmi4_data->sensor_sleep = enable;
+
+	return;
+}
+
 static void tpd_resume(struct device *h)
 {	
 	int retval;
@@ -3683,6 +3723,16 @@ static void tpd_resume(struct device *h)
 	msleep(50);
 	/* Recovery EINT Mode */
 	/*tpd_gpio_as_int(GTP_INT_PORT);*/
+	
+	synaptics_rmi4_sleep_enable(rmi4_data, false);
+
+	retval = synaptics_rmi4_reinit_device(rmi4_data);
+	if (retval < 0) {
+		dev_err(&rmi4_data->i2c_client->dev,
+				"%s: Failed to reinit device\n",
+				__func__);
+		return ;
+	}
 
 	mutex_lock(&i2c_access);
 	tpd_halt = 0;
@@ -3694,6 +3744,7 @@ static void tpd_resume(struct device *h)
 exit:
 	rmi4_data->suspend = false;
 }
+/*
 static void synaptics_rmi4_sensor_sleep(struct synaptics_rmi4_data *rmi4_data)
 {
 	int retval;
@@ -3731,7 +3782,7 @@ static void synaptics_rmi4_sensor_sleep(struct synaptics_rmi4_data *rmi4_data)
 	printk("--lanhai %s end---\n", __func__);
 
 	return;
-}
+}*/
 
 static void tpd_suspend(struct device *h)
 {
@@ -3761,7 +3812,8 @@ static void tpd_suspend(struct device *h)
 	//retval = regulator_disable(tpd->reg);
 	//if (retval != 0)
 	//	TPD_DMESG("Failed to disable reg-vgp6: %d\n", retval);
-	synaptics_rmi4_sensor_sleep(rmi4_data);
+	//synaptics_rmi4_sensor_sleep(rmi4_data);
+	synaptics_rmi4_sleep_enable(rmi4_data, true);
 	synaptics_rmi4_free_fingers(rmi4_data);
 	rmi4_data->irq_enabled = false; 
 

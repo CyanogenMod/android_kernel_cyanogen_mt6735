@@ -23,6 +23,8 @@
 #define OVL_LAYER_OFFSET	(0x20)
 #define OVL_RDMA_DEBUG_OFFSET	(0x4)
 
+extern int mtk_lcm_physical_rotation;
+
 enum OVL_COLOR_SPACE {
 	OVL_COLOR_SPACE_RGB = 0,
 	OVL_COLOR_SPACE_YUV,
@@ -549,8 +551,10 @@ static int ovl_layer_config(DISP_MODULE_ENUM module, unsigned int layer,
 		value = value | REG_FLD_VAL((L_CON_FLD_MTX), (color_matrix));
 
 #ifdef CONFIG_MTK_LCM_PHYSICAL_ROTATION_HW
+if(mtk_lcm_physical_rotation == 1){
 	if (!is_memory)
 		value |= 0x600;
+}
 #endif
 	DISP_REG_SET_DIRTY(handle, DISP_REG_OVL_L0_CON + layer_offset, value);
 
@@ -559,6 +563,7 @@ static int ovl_layer_config(DISP_MODULE_ENUM module, unsigned int layer,
 	DISP_REG_SET_DIRTY(handle, DISP_REG_OVL_L0_SRC_SIZE + layer_offset, dst_h << 16 | dst_w);
 
 #ifdef CONFIG_MTK_LCM_PHYSICAL_ROTATION_HW
+if(mtk_lcm_physical_rotation == 1){
 	if (!is_memory) {
 		bg_h = DISP_REG_GET(idx_offset + DISP_REG_OVL_ROI_SIZE);
 		bg_w = bg_h & 0xFFFF;
@@ -569,15 +574,22 @@ static int ovl_layer_config(DISP_MODULE_ENUM module, unsigned int layer,
 		DISP_REG_SET_DIRTY(handle, DISP_REG_OVL_L0_OFFSET + layer_offset,
 			dst_y << 16 | dst_x);
 	}
+}else{
+	DISP_REG_SET_DIRTY(handle, DISP_REG_OVL_L0_OFFSET + layer_offset, dst_y << 16 | dst_x);
+}
 #else
 	DISP_REG_SET_DIRTY(handle, DISP_REG_OVL_L0_OFFSET + layer_offset, dst_y << 16 | dst_x);
 #endif
 
 #ifdef CONFIG_MTK_LCM_PHYSICAL_ROTATION_HW
+if(mtk_lcm_physical_rotation == 1){
 	if (!is_memory)
 		offset = src_pitch * (dst_h + src_y - 1) + (src_x + dst_w) * bpp - 1;
 	else
 		offset = src_x * bpp + src_y * src_pitch;
+}else{
+	offset = src_x * bpp + src_y * src_pitch;
+}
 #else
 	offset = src_x * bpp + src_y * src_pitch;
 #endif
