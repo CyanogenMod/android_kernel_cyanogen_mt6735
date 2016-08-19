@@ -154,7 +154,16 @@ static void otp_write_8(kal_uint16 addr, kal_uint8 para)
     
     iWriteRegI2C(pusendcmd , 3, S5K3M2_I2C_WRITE_ID);
 }
-
+/*
+static kal_uint8 eeprom_otp_read_8(kal_uint32 addr, kal_uint16 i2cId)
+{
+    kal_uint8 get_byte=0;
+    char pusendcmd[2] = {(char)(addr >> 8) , (char)(addr & 0xFF) };
+    kdSetI2CSpeed(S5K3M2_I2C_SPEED);
+    iReadRegI2C(pusendcmd , 2, (u8*)&get_byte, 1, i2cId);
+    return get_byte;
+}
+*/
 /*************************************************************************************************
 * Function    :  start_read_otp
 * Description :  before read otp , set the reading block setting  
@@ -534,7 +543,7 @@ static kal_uint8 Read_AF_Otp(kal_uint16 address,unsigned char *iBuffer,unsigned 
 		      printk("--->>>read af i = %d data[i]=0x%x\n",i,iBuffer[i]);
 		}*/
 	/*s5k3m2 af otp*/
-	u8 i;
+	u8 readbuff, i;
 	printk("--->>> Read_AF_Otp: address = 0x%x\n", address);
 	for(i=0;i<buffersize;i++){
 		if(address == 0x0a18 || address == 0x0a16){
@@ -542,6 +551,10 @@ static kal_uint8 Read_AF_Otp(kal_uint16 address,unsigned char *iBuffer,unsigned 
 			*(iBuffer+i) = (unsigned char)otp_read_8(address-i+1 + afGroupIdx*32);
 			printk("--->>> Read_AF_Otp: address = 0x%x, iBuffer[%d] = 0x%x\n", address-i+1, i, *((unsigned char*)(iBuffer+i)));
 			stop_read_otp();
+		}else{
+			iReadCAM_CAL((address-i+1),&readbuff);
+			*(iBuffer+i)=readbuff;
+			printk("read af i = %d data[i]=0x%x\n",i,iBuffer[i]);
 		}
 	}
 	printk("--->>> Read_AF_Otp: af_otp_data = 0x%x, afGroupIdx = %d\n", *((unsigned short*)iBuffer), afGroupIdx);
@@ -552,15 +565,22 @@ static kal_uint8 Read_AF_Otp(kal_uint16 address,unsigned char *iBuffer,unsigned 
 
 static kal_uint8 Read_AWB_Otp(kal_uint8 address,unsigned char *iBuffer,unsigned int buffersize)
 {
-	u8 readbuff, i;
+	u8 readbuff, i, j;
   	printk("Read_AWB_Otp address=%x, buffersize=%d\r\n",address,buffersize);
 	for(i=0;i<buffersize;i++)
 		{
+		if(address == 0x001d || address == 0x0025){
+		    j=i*2+1;
+	            iReadCAM_CAL((address+j),&readbuff);
+			*(iBuffer+i)=readbuff;
+		      printk("--->>>read awb j = %d, data[i]=0x%x\n",j,iBuffer[i]);
+		}else{
 	            iReadCAM_CAL((address+i),&readbuff);
 			*(iBuffer+i)=readbuff;
 		      //CAM_CALDB("read awb data[i]=0x%x\n",i,iBuffer[i]);
 		      printk("--->>>read awb i = %d, data[i]=0x%x\n",i,iBuffer[i]);
 		}
+	}
 	
 	return KAL_TRUE;
 
