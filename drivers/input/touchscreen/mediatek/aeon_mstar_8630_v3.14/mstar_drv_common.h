@@ -146,7 +146,7 @@
  * Please make sure firmware support debug mode data log firstly, then you can enable this flag.
  * By default, this flag is enabled.
  */
-#define CONFIG_ENABLE_FIRMWARE_DATA_LOG (1)   // 1 : Enable, 0 : Disable
+#define CONFIG_ENABLE_FIRMWARE_DATA_LOG (0)   // 1 : Enable, 0 : Disable
 
 /*
  * Note.
@@ -204,7 +204,7 @@
 //#define CONFIG_ENABLE_CHIP_TYPE_MSG21XXA
 //#define CONFIG_ENABLE_CHIP_TYPE_MSG22XX
 //#define CONFIG_ENABLE_CHIP_TYPE_MSG26XXM
-//#define CONFIG_ENABLE_CHIP_TYPE_MSG28XX
+#define CONFIG_ENABLE_CHIP_TYPE_MSG28XX
 
 
 /*
@@ -236,7 +236,7 @@
  * If this compile option is not defined, the SW ID mechanism for updating firmware will be disabled.
  * By default, this compile option is disabled.
  */
-//#define CONFIG_UPDATE_FIRMWARE_BY_SW_ID
+#define CONFIG_UPDATE_FIRMWARE_BY_SW_ID
 
 // ------------------- #ifdef CONFIG_UPDATE_FIRMWARE_BY_SW_ID ------------------- //
 #ifdef CONFIG_UPDATE_FIRMWARE_BY_SW_ID
@@ -325,7 +325,12 @@
  * The below compile option is used to enable ESD protection.
  * By default, this compile option is disabled.
  */
-//#define CONFIG_ENABLE_ESD_PROTECTION
+ #define CONFIG_ENABLE_ESD_EXTRA_SAFEGAURD
+ // ------------------- #ifdef CONFIG_ENABLE_ESD_EXTRA_SAFEGAURD ------------------- //
+ #ifdef CONFIG_ENABLE_ESD_EXTRA_SAFEGAURD
+ #define ESD_EXTRA_SAFEGAURD_COUNTER     (5)
+ #endif
+#define CONFIG_ENABLE_ESD_PROTECTION
 
 // ------------------- #ifdef CONFIG_ENABLE_ESD_PROTECTION ------------------- //
 #ifdef CONFIG_ENABLE_ESD_PROTECTION
@@ -602,7 +607,7 @@
  * If the debug log level is set as 0, the function for output log will be disabled.
  * By default, the debug log level is set as 1.
  */
-#define CONFIG_TOUCH_DRIVER_DEBUG_LOG_LEVEL (1)   // 1 : Default, 0 : No log. The bigger value, the more detailed log is output.
+#define CONFIG_TOUCH_DRIVER_DEBUG_LOG_LEVEL (0)   // 1 : Default, 0 : No log. The bigger value, the more detailed log is output.
 
 /*=============================================================*/
 // EXTERN VARIABLE DECLARATION

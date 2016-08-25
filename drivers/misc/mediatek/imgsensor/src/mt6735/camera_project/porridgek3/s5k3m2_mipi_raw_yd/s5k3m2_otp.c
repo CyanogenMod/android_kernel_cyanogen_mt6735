@@ -55,6 +55,7 @@ static DEFINE_SPINLOCK(g_CAM_CALLock); // for SMP
 #define CAM_CAL_I2C_BUSNUM 0
 
 extern u8 OTPData[];
+//u8 OTPData[] = {0};
 int otp_flag=0;
 /*******************************************************************************
 *
@@ -533,7 +534,7 @@ static kal_uint8 Read_AF_Otp(kal_uint16 address,unsigned char *iBuffer,unsigned 
 		      printk("--->>>read af i = %d data[i]=0x%x\n",i,iBuffer[i]);
 		}*/
 	/*s5k3m2 af otp*/
-	u8 i;
+	u8 readbuff, i;
 	printk("--->>> Read_AF_Otp: address = 0x%x\n", address);
 	for(i=0;i<buffersize;i++){
 		if(address == 0x0a18 || address == 0x0a16){
@@ -541,6 +542,14 @@ static kal_uint8 Read_AF_Otp(kal_uint16 address,unsigned char *iBuffer,unsigned 
 			*(iBuffer+i) = (unsigned char)otp_read_8(address-i+1 + afGroupIdx*32);
 			printk("--->>> Read_AF_Otp: address = 0x%x, iBuffer[%d] = 0x%x\n", address-i+1, i, *((unsigned char*)(iBuffer+i)));
 			stop_read_otp();
+		}else if (address == 0x14 || address == 0x16){
+			iReadCAM_CAL((address+i),&readbuff);
+			*(iBuffer+i)=readbuff;
+			printk("read af of sunwin i = %d data[i]=0x%x\n",i,iBuffer[i]);
+		}else{
+			iReadCAM_CAL((address-i+1),&readbuff);
+			*(iBuffer+i)=readbuff;
+			printk("read af of qt i = %d data[i]=0x%x\n",i,iBuffer[i]);
 		}
 	}
 	printk("--->>> Read_AF_Otp: af_otp_data = 0x%x, afGroupIdx = %d\n", *((unsigned short*)iBuffer), afGroupIdx);

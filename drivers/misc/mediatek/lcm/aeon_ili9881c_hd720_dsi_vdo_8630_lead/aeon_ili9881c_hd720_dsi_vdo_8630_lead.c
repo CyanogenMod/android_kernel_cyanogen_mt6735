@@ -316,6 +316,7 @@ static struct LCM_setting_table lcm_initialization_setting[] = {
 
 {0x29, 1, {0x00}},
 {REGFLAG_DELAY, 20, {}},
+{0xFF,3,{0x98,0x81,0x05}},
 
 {REGFLAG_END_OF_TABLE, 0x00, {}}
 };
@@ -334,6 +335,8 @@ static struct LCM_setting_table lcm_sleep_out_setting[] = {
 */
 
 static struct LCM_setting_table lcm_sleep_in_setting[] = {
+
+	{0xFF,3,{0x98,0x81,0x00}},
 	// Display off sequence
 	{0x28, 1, {0x00}},
 	{REGFLAG_DELAY, 10, {}},
@@ -435,9 +438,9 @@ static void lcm_get_params(LCM_PARAMS *params)
 #if 1
     params->dsi.esd_check_enable =1;
 	params->dsi.customization_esd_check_enable =1;
-	params->dsi.lcm_esd_check_table[0].cmd = 0xAC;
+	params->dsi.lcm_esd_check_table[0].cmd = 0x0a;
 	params->dsi.lcm_esd_check_table[0].count =1;
-	params->dsi.lcm_esd_check_table[0].para_list[0] = 0x00;
+	params->dsi.lcm_esd_check_table[0].para_list[0] = 0x9c;
 #else
 	params->dsi.cont_clock=1;
 	params->dsi.clk_lp_per_line_enable = 0;

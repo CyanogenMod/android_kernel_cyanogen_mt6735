@@ -279,7 +279,7 @@ static void _DrvFwCtrlReadReadDQMemEnd(void);
 // LOCAL FUNCTION DEFINITION
 /*=============================================================*/
 
-static void _DrvFwCtrlEraseEmemC33(EmemType_e eEmemType)
+/*static void _DrvFwCtrlEraseEmemC33(EmemType_e eEmemType)
 {
     DBG(&g_I2cClient->dev, "*** %s() ***\n", __func__);
 
@@ -317,7 +317,7 @@ static void _DrvFwCtrlEraseEmemC33(EmemType_e eEmemType)
         RegSetLByteValue(0x160E, 0x08); //erase all block
     }
 }
-
+*/
 static void _DrvFwCtrlMsg22xxGetTpVendorCode(u8 *pTpVendorCode)
 {
     DBG(&g_I2cClient->dev, "*** %s() ***\n", __func__);
@@ -2328,6 +2328,10 @@ static s32 _DrvFwCtrlMutualParsePacket(u8 *pPacket, u16 nLength, MutualTouchInfo
     u32 i;
     u8 nCheckSum = 0;
     u32 nX = 0, nY = 0;
+#ifdef CONFIG_ENABLE_ESD_EXTRA_SAFEGAURD 
+    static u8 ncheckcounter=0;
+    DBG(&g_I2cClient->dev, "ESD_EXTRA_SAFEGAURD  %s ENABLE \n", __func__);
+#endif
 
     DBG(&g_I2cClient->dev, "*** %s() ***\n", __func__);
 
@@ -2361,6 +2365,24 @@ static s32 _DrvFwCtrlMutualParsePacket(u8 *pPacket, u16 nLength, MutualTouchInfo
     nCheckSum = DrvCommonCalculateCheckSum(&pPacket[0], (nLength-1));
     DBG(&g_I2cClient->dev, "checksum : [%x] == [%x]? \n", pPacket[nLength-1], nCheckSum);
 
+#ifdef CONFIG_ENABLE_ESD_EXTRA_SAFEGAURD 
+    if( (pPacket[0] != 0x5a && (pPacket[nLength-1] != nCheckSum))|| 
+		((pPacket[0] == 0x0||pPacket[0] == 0xff) &&(pPacket[nLength-1]== 0x0|| pPacket[nLength-1]==0xff))
+		)
+    	{
+		ncheckcounter++;
+	}
+	else
+	{
+		ncheckcounter=0;
+	}
+DBG(&g_I2cClient->dev, "ncheckcounter=%d\n",ncheckcounter);
+      if( ncheckcounter >= ESD_EXTRA_SAFEGAURD_COUNTER)
+      	{
+     ncheckcounter=0;
+     DrvPlatformLyrTouchDeviceResetHw();
+	 }
+#endif
     if (pPacket[nLength-1] != nCheckSum)
     {
         DBG(&g_I2cClient->dev, "WRONG CHECKSUM\n");

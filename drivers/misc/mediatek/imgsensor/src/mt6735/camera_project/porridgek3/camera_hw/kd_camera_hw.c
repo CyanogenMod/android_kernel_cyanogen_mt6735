@@ -153,7 +153,24 @@ PowerUp PowerOnList={
             },
         },
     #endif
-
+    #if defined(HI843B_MIPI_RAW)
+	{SENSOR_DRVNAME_HI843B_MIPI_RAW,
+		{ 
+		{SensorId, SUB_SENSOR, 0},
+                {SensorMCLK, Mclk1, 0},
+                {RST,    Vol_Low,  0},
+                {PDN,    Vol_Low,  0},
+                {AVDD,    Vol_2800, 10},
+                {DOVDD, Vol_1800, 10},
+                {DVDD,    Vol_1200, 10},
+    //            {AFVDD, Vol_2800, 10},
+                {PDN,    Vol_Low, 10},
+                {PDN,    Vol_High, 10},
+                {RST,    Vol_Low, 10},
+                {RST,    Vol_High, 10},
+		},
+        },
+	#endif
 
         {NULL,},
     }

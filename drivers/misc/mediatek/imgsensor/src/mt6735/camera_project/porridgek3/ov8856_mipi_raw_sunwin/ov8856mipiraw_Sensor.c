@@ -43,7 +43,7 @@
 
 #define FLIP
 #define MIRROR
-//#define OV8856OTP
+#define OV8856OTP
 
 //#define LOG_WRN(format, args...) xlog_printk(ANDROID_LOG_WARN ,PFX, "[%S] " format, __FUNCTION__, ##args)
 //#defineLOG_INF(format, args...) xlog_printk(ANDROID_LOG_INFO ,PFX, "[%s] " format, __FUNCTION__, ##args)
@@ -52,9 +52,7 @@
 
 
 static DEFINE_SPINLOCK(imgsensor_drv_lock);
-#ifdef OV8856OTP
 int ov8856_sw_otp = 0;
-#endif
 static kal_uint32 set_test_pattern_mode(kal_bool enable);
 
 static imgsensor_info_struct imgsensor_info = { 
@@ -1205,12 +1203,12 @@ int VCM_start;
 int VCM_end;
 int VCM_dir;
 };
-struct otp_struct otp_ptr;
+//struct otp_struct otp_ptr;
 
-#define RG_Ratio_Typical   0x12A
-#define BG_Ratio_Typical   0x168
+#define RG_Ratio_Typical   0x163
+#define BG_Ratio_Typical   0x172
 
-int read_otp(struct otp_struct *otp_ptr)
+static int read_otp(struct otp_struct *otp_ptr)
 {
 	int otp_flag, addr, temp, i;
 	int  checksum2=0;
@@ -1326,7 +1324,7 @@ int read_otp(struct otp_struct *otp_ptr)
 // bit[6]: 0 no otp wb, 1 valib otp wb
 // bit[5]: 0 no otp vcm, 1 valid otp vcm
 // bit[4]: 0 no otp lenc, 1 valid otp lenc
-int apply_otp(struct otp_struct *otp_ptr)
+static int apply_otp(struct otp_struct *otp_ptr)
 {
 	int rg, bg, R_gain, G_gain, B_gain, Base_gain, temp, i;
 	// apply OTP WB Calibration
@@ -1443,9 +1441,9 @@ static kal_uint32 open(void)
 	mdelay(30);
 	#ifdef OV8856OTP
 	//	LOG_INF("Apply the sensor OTP\n");
-		ov8856_otp = read_otp(otp_ptr);
+		ov8856_sw_otp = read_otp(otp_ptr);
 		apply_otp(otp_ptr);
-		//kfree(otp_ptr);
+		kfree(otp_ptr);
 	#endif
 
 	#ifdef OV8856OTP

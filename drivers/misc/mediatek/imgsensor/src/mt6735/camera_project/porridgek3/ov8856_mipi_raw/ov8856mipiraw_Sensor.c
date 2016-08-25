@@ -1203,7 +1203,7 @@ int VCM_start;
 int VCM_end;
 int VCM_dir;
 };
-struct otp_struct otp_ptr;
+//struct otp_struct otp_ptr;
 
 #define RG_Ratio_Typical   0x12A
 #define BG_Ratio_Typical   0x168
@@ -1443,7 +1443,7 @@ static kal_uint32 open(void)
 	//	LOG_INF("Apply the sensor OTP\n");
 		ov8856_otp = read_otp(otp_ptr);
 		apply_otp(otp_ptr);
-		//kfree(otp_ptr);
+		kfree(otp_ptr);
 	#endif
 
         if(ov8856_otp == 0)
