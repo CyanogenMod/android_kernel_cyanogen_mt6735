@@ -78,8 +78,6 @@ static u32 MTK_FB_PAGES;
 static u32 fb_xres_update;
 static u32 fb_yres_update;
 
-int mtk_lcm_physical_rotation = 0;
-
 #define MTK_FB_XRESV (ALIGN_TO(MTK_FB_XRES, MTK_FB_ALIGNMENT))
 #define MTK_FB_YRESV (MTK_FB_YRES * MTK_FB_PAGES)	/* For page flipping */
 #define MTK_FB_BYPP  ((MTK_FB_BPP + 7) >> 3)
@@ -1649,7 +1647,6 @@ static void mtkfb_fbinfo_cleanup(struct mtkfb_device *fbdev)
 	(((x) & 0xF800) << 8) |		\
 	(0xFF << 24)) /* opaque */
 
-
 /**
  * Free driver resources. Can be called to rollback an aborted initialization
  * sequence.
@@ -1701,9 +1698,7 @@ void disp_get_fb_address(unsigned long *fbVirAddr, unsigned long *fbPhysAddr)
 
 char *mtkfb_find_lcm_driver(void)
 {
-	char* lcm_lide = "aeon_ili9881c_hd720_dsi_vdo_lide_8536";
-	char* lcm_hlt = "aeon_ili9881c_hd720_dsi_vdo_hlt_8536_25t";
-	char* lcm_txd = "aeon_ili9881c_hd720_dsi_vdo_txd_8536";
+
 #ifdef CONFIG_OF
 	if (1 == _parse_tag_videolfb()) {
 		pr_debug("[mtkfb] not found LCM driver, return NULL\n");
@@ -1732,11 +1727,7 @@ char *mtkfb_find_lcm_driver(void)
 		mtkfb_lcm_name[q - p + 1] = '\0';
 	}
 #endif
-	printk("%s, %s\n", __func__, mtkfb_lcm_name); 
-	 
-	if((strcmp(lcm_lide, mtkfb_lcm_name) == 0) || (strcmp(lcm_hlt, mtkfb_lcm_name) == 0) || (strcmp(lcm_txd, mtkfb_lcm_name) == 0)){
-		mtk_lcm_physical_rotation = 1;
-	}
+	/* printk("%s, %s\n", __func__, mtkfb_lcm_name); */
 	return mtkfb_lcm_name;
 }
 
