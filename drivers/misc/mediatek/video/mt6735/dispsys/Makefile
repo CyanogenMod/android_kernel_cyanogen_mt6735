@@ -10,6 +10,10 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/video/include/ \
              -I$(srctree)/drivers/misc/mediatek/base/power/mt6735/ \
              -I$(srctree)/drivers/misc/mediatek/lcm/inc/
 
+ccflags-y += -DCONFIG_MACH_MT6735_$(shell echo $(CONFIG_ARCH_MTK_PROJECT) | tr a-z A-Z)
+
+
+
 subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/m4u/$(MTK_PLATFORM) \
                     -I$(srctree)/drivers/misc/mediatek/m4u/$(MTK_PLATFORM)/mt6735
 

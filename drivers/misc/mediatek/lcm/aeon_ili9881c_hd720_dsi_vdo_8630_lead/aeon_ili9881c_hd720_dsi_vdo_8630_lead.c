@@ -438,9 +438,15 @@ static void lcm_get_params(LCM_PARAMS *params)
 #if 1
     params->dsi.esd_check_enable =1;
 	params->dsi.customization_esd_check_enable =1;
-	params->dsi.lcm_esd_check_table[0].cmd = 0x0a;
+	params->dsi.lcm_esd_check_table[0].cmd = 0x03;
 	params->dsi.lcm_esd_check_table[0].count =1;
-	params->dsi.lcm_esd_check_table[0].para_list[0] = 0x9c;
+	params->dsi.lcm_esd_check_table[0].para_list[0] = 0x72;
+	params->dsi.lcm_esd_check_table[1].cmd = 0x04;
+	params->dsi.lcm_esd_check_table[1].count =1;
+	params->dsi.lcm_esd_check_table[1].para_list[0] = 0x00;
+	params->dsi.lcm_esd_check_table[2].cmd = 0x06;
+	params->dsi.lcm_esd_check_table[2].count =1;
+	params->dsi.lcm_esd_check_table[2].para_list[0] = 0x09;
 #else
 	params->dsi.cont_clock=1;
 	params->dsi.clk_lp_per_line_enable = 0;
