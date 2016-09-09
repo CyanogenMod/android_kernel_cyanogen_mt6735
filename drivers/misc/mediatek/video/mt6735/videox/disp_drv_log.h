@@ -8,7 +8,7 @@ extern unsigned int dprec_error_log_len;
 extern unsigned int dprec_error_log_id;
 extern unsigned int dprec_error_log_buflen;
 
-#if 0
+#if 1
 #define DISPMSG(string, args...) pr_debug("[DISP]"string, ##args)	/* default on, important msg, not err */
 #define DISPDBG(string, args...) pr_debug("disp/"string, ##args)
 #define DISPERR	DISPPR_ERROR

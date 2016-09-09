@@ -3989,7 +3989,10 @@ int ddp_dsi_build_cmdq(DISP_MODULE_ENUM module, void *cmdq_trigger_handle, CMDQ_
 		//		     0x00013700);
 #ifdef CONFIG_MACH_MT6735_PORRIDGEK3
 			DSI_OUTREG32(cmdq_trigger_handle, &DSI_CMDQ_REG[dsi_i]->data[0], 0x00043902);
-			DSI_OUTREG32(cmdq_trigger_handle, &DSI_CMDQ_REG[dsi_i]->data[1], 0x038198ff);
+			if(dsi_params->lcm_esd_check_table[i].cmd == 0x0a)
+				DSI_OUTREG32(cmdq_trigger_handle, &DSI_CMDQ_REG[dsi_i]->data[1], 0x008198ff);
+			else
+				DSI_OUTREG32(cmdq_trigger_handle, &DSI_CMDQ_REG[dsi_i]->data[1], 0x038198ff);
 			DSI_OUTREG32(cmdq_trigger_handle, &DSI_CMDQ_REG[dsi_i]->data[2], AS_UINT32(&t1));
 			DSI_OUTREG32(cmdq_trigger_handle, &DSI_CMDQ_REG[dsi_i]->data[3], AS_UINT32(&t0));
 			DSI_OUTREG32(cmdq_trigger_handle, &DSI_CMDQ_REG[dsi_i]->data[4], 0x00043902);
