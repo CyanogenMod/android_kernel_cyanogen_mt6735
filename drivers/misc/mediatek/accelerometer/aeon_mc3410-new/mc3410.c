@@ -60,6 +60,7 @@
 #define C_MAX_FIR_LENGTH	(32)
 #define VIRTUAL_Z	0
 
+extern int vibr_flag; ///added by maxyu 150998 for gsensor
 /*****************************************************************************
  *** CONSTANT / DEFINITION
  *****************************************************************************/
@@ -999,7 +1000,39 @@ static void MC3XXX_SaveDefaultOffset(struct i2c_client *p_i2c_client)
  *** MC3XXX_LPF
  *****************************************/
 #ifdef _MC3XXX_SUPPORT_LPF_
-static void MC3XXX_LPF(struct mc3xxx_i2c_data *priv, s16 data[MC3XXX_AXES_NUM])
+#define gsensor_filter(last_data, data)		((( 90* (last_data)) + (10 * (data))) / 100)
+static void MC3XXX_HPF(s16 data[MC3XXX_AXES_NUM])
+{
+	s32 filter_data_x,filter_data_y,filter_data_z;
+	static s32 pre_data_x,pre_data_y,pre_data_z;
+	static s32 poll_counter=0;
+	filter_data_x = data[0]*1000;
+	filter_data_y = data[1]*1000;
+	filter_data_z = data[2]*1000;
+	
+	printk("--->>>MC3XXX_HPF vibr_flag = %d\n", vibr_flag);
+	  if (1 == vibr_flag)
+	  {
+		filter_data_x = gsensor_filter(pre_data_x, filter_data_x);
+		filter_data_y = gsensor_filter(pre_data_y, filter_data_y);
+		filter_data_z = gsensor_filter(pre_data_z, filter_data_z);
+		poll_counter=0;
+	  }
+	  else if(poll_counter<20)
+	  {
+	  	poll_counter++;
+	  	filter_data_x = gsensor_filter(pre_data_x, filter_data_x);
+		filter_data_y = gsensor_filter(pre_data_y, filter_data_y);
+		filter_data_z = gsensor_filter(pre_data_z, filter_data_z);
+	  }
+	pre_data_x = filter_data_x;
+	pre_data_y = filter_data_y;
+	pre_data_z = filter_data_z;
+	data[0]= filter_data_x/1000;
+	data[1]= filter_data_y/1000;
+	data[2]= filter_data_z/1000;
+}
+/* static void MC3XXX_LPF(struct mc3xxx_i2c_data *priv, s16 data[MC3XXX_AXES_NUM])
 {
 	if (atomic_read(&priv->filter)) {
 		if (atomic_read(&priv->fir_en) && !atomic_read(&priv->suspend)) {
@@ -1050,7 +1083,7 @@ static void MC3XXX_LPF(struct mc3xxx_i2c_data *priv, s16 data[MC3XXX_AXES_NUM])
 			}
 		}
 	}
-}
+} */
 #endif	/* END OF #ifdef _MC3XXX_SUPPORT_LPF_ */
 
 #ifdef _MC3XXX_SUPPORT_LRF_
@@ -1247,7 +1280,8 @@ static int	MC3XXX_ReadData(struct i2c_client *pt_i2c_client, s16 waData[MC3XXX_A
 	#ifdef _MC3XXX_SUPPORT_LPF_
 		_ptPrivData = i2c_get_clientdata(pt_i2c_client);
 
-		MC3XXX_LPF(_ptPrivData, waData);
+		//MC3XXX_LPF(_ptPrivData, waData);read
+			MC3XXX_HPF(waData);  //becky
 		if (atomic_read(&_pt_i2c_obj->trace) & MCUBE_TRC_INFO)
 			GSE_LOG("LPF<<<<<[%04d %04d %04d]\n", waData[MC3XXX_AXIS_X], waData[MC3XXX_AXIS_Y],
 				waData[MC3XXX_AXIS_Z]);

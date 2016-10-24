@@ -81,6 +81,7 @@ static struct work_struct vibrator_work;
 static struct hrtimer vibe_timer;
 static spinlock_t vibe_lock;
 static int vibe_state;
+int vibr_flag = 0;
 static int ldo_state;
 static int shutdown_flag;
 
@@ -138,6 +139,7 @@ static void vibrator_enable(struct timed_output_dev *dev, int value)
 		VIB_DEBUG("vibrator_enable: shutdown_flag = %d\n",
 			  shutdown_flag);
 		vibe_state = 0;
+		vibr_flag = 0;
 	} else {
 #if 1
 		VIB_DEBUG("vibrator_enable: vibrator cust timer: %d\n",
@@ -152,6 +154,7 @@ static void vibrator_enable(struct timed_output_dev *dev, int value)
 
 		value = (value > 15000 ? 15000 : value);
 		vibe_state = 1;
+		vibr_flag = 1;
 		hrtimer_start(&vibe_timer,
 			      ktime_set(value / 1000, (value % 1000) * 1000000),
 			      HRTIMER_MODE_REL);
@@ -164,6 +167,7 @@ static void vibrator_enable(struct timed_output_dev *dev, int value)
 static enum hrtimer_restart vibrator_timer_func(struct hrtimer *timer)
 {
 	vibe_state = 0;
+	vibr_flag = 0;
 	VIB_DEBUG("vibrator_timer_func: vibrator will disable\n");
 	queue_work(vibrator_queue, &vibrator_work);
 	return HRTIMER_NORESTART;
@@ -195,6 +199,7 @@ static void vib_shutdown(struct platform_device *pdev)
 	if (vibe_state) {
 		VIB_DEBUG("vib_shutdown: vibrator will disable\n");
 		vibe_state = 0;
+		vibr_flag = 0;
 		spin_unlock_irqrestore(&vibe_lock, flags);
 		vibr_Disable();
 	} else {
@@ -277,6 +282,7 @@ static int vib_mod_init(void)
 	spin_lock_init(&vibe_lock);
 	shutdown_flag = 0;
 	vibe_state = 0;
+	vibr_flag = 0;
 	hrtimer_init(&vibe_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	vibe_timer.function = vibrator_timer_func;
 
